@@ -7,12 +7,15 @@
     <link rel="stylesheet" href="style.css">
     <script id="vertex-shader" type="x-shader/x-vertex">
       attribute vec4 vPosition;
+      attribute vec2 vTexCoords2D;
+
 
       uniform mat4 mvMatrix;
       uniform mat4 projMatrix;
       uniform float vColoringMode;
 
-      varying vec3 texCoords;
+      varying vec3 texCoords3D;
+      varying vec2 texCoords2D;
 
       // lighting
       attribute vec3 vNormal;
@@ -24,8 +27,6 @@
 
         if (vColoringMode == 0.0) {
           vec3 pos = (mvMatrix * vPosition).xyz;
-          // festum ljósið
-          // vec3 mvLightPos = mat3(mvMatrix) * lightPosition.xyz;
 
           // notum bara directional light : sól langt í burtu.
           L = normalize(lightPosition.xyz);
@@ -34,26 +35,29 @@
           N = normalize(mat3(mvMatrix) * vNormal);
 
           gl_Position = projMatrix * mvMatrix * vPosition;
-        }
-        else if (vColoringMode == 1.0) {
+        } else if (vColoringMode == 1.0) {
           gl_Position = projMatrix * mat4(mat3(mvMatrix)) * vPosition.xyzw;
-        }
-        else {
-          gl_Position = projMatrix * mvMatrix * vPosition.xyzw;
+
+        } else {
+          gl_Position = projMatrix * mvMatrix * vPosition;
+          texCoords2D = vTexCoords2D;
         }
 
+        texCoords3D = vPosition.xyz;
 
-        texCoords = vPosition.xyz;
       }
     </script>
     <script id="fragment-shader" type="x-shader/x-fragment">
       precision mediump float;
 
-      uniform samplerCube skybox;
+
       uniform float fColoringMode;
       uniform vec4 altColor;
+      uniform sampler2D sunTexture;
+      uniform samplerCube skybox;
 
-      varying vec3 texCoords;
+      varying vec2 texCoords2D;
+      varying vec3 texCoords3D;
 
       // lighting
       uniform vec4 ambientProduct;
@@ -84,10 +88,12 @@
           gl_FragColor = fColor;
         }
         else if (fColoringMode == 1.0) {
-          gl_FragColor = textureCube(skybox, texCoords);
+          gl_FragColor = textureCube(skybox, texCoords3D);
+          //gl_FragColor = vec4(0.2, 0.4, 0.6, 1.0);
         }
         else if (fColoringMode == 2.0) {
-          gl_FragColor = altColor;
+          gl_FragColor = texture2D(sunTexture, texCoords2D);
+          //gl_FragColor = altColor;
         }
       }
     </script>
@@ -116,6 +122,7 @@
       <img src="textures/skybox/skyboxLF.jpg" id="skybox-left">
       <img src="textures/skybox/skyboxRT.jpg" id="skybox-right">
       <img src="textures/skybox/skyboxUP.jpg" id="skybox-up">
+      <img src="textures/texture_sun_blue_v2.jpg" id="tex-sun">
     </div>
     <script src="libs/initShaders.js" type="text/javascript"></script>
     <script src="libs/MV.js" type="text/javascript"></script>
