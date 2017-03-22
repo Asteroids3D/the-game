@@ -89,7 +89,6 @@
         }
         else if (fColoringMode == 1.0) {
           gl_FragColor = textureCube(skybox, texCoords3D);
-          //gl_FragColor = vec4(0.2, 0.4, 0.6, 1.0);
         }
         else if (fColoringMode == 2.0) {
           gl_FragColor = texture2D(sunTexture, texCoords2D);
@@ -101,18 +100,8 @@
   <body id="body">
     <div class="container">
       <canvas id="gl-canvas"></canvas>
-      <div class="to-be-hidden">
-        <p>xPos: <span id="xpos-display">0.0</span></p>
-        <p>yPos: <span id="ypos-display">0.0</span></p>
-        <p>zPos: <span id="zpos-display">0.0</span></p>
-        <hr>
-        <p>xAngle: <span id="xangle-display">0.0</span></p>
-        <p>yAngle: <span id="yangle-display">0.0</span></p>
-        <p>zAngle: <span id="zangle-display">0.0</span></p>
-        <hr>
-        <p>xLook: <span id="xlook-display">0.0</span></p>
-        <p>yLook: <span id="ylook-display">0.0</span></p>
-        <p>zLook: <span id="zlook-display">0.0</span></p>
+      <div class="dashboard">
+        <p>SPEED <span id="display-speed">0.0</span> m/s</p>
       </div>
     </div>
     <div class="texture-container">

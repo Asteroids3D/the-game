@@ -7,11 +7,6 @@ var locMvMatrix, locProjMatrix, locPosition, locColor;
 // rotate variables
 var rotates, xSpin, ySpin, oldX, oldY;
 
-// translate variables
-
-var xDir, yDir, zDir;
-var xPos, yPos, zPos;
-
 var ctm, rotator;
 
 var pitch, yaw;
@@ -38,9 +33,11 @@ var theSun;
 var locAltColor;
 
 var locTexCoords;
-var sunSpin;
 
 var theSpaceCube;
+var collision;
+var thePlayer;
+var displaySpeed;
 
 window.onload = function init() {
 
@@ -66,25 +63,22 @@ window.onload = function init() {
   rotates = false;
   xSpin = ySpin = oldX = oldY = 0.0; // Ekki í notkun eins og er.
 
-  sunSpin = 0.0;
-  xDir = yDir = 0.0;
-  zDir = 1.0;
-  xPos = yPos = zPos = 0.0;
   pitch = yaw = 0.0;
   rotateSpeed = 1.5;
   aspect = gl.clientWidth / gl.clientHeight;
-  numberOfRoids = 21;
+  numberOfRoids = 60; // multiple of 3
   roids = [];
 
+  thePlayer = new Player();
 
   for (var i = 0; i < numberOfRoids / 3; i++) {
-    roids.push(new Asteroid(6));
+    roids.push(new Asteroid(8));
   }
   for (var i = 0; i < numberOfRoids / 3; i++) {
-    roids.push(new Asteroid(3));
+    roids.push(new Asteroid(4));
   }
   for (var i = 0; i < numberOfRoids / 3; i++) {
-    roids.push(new Asteroid(1));
+    roids.push(new Asteroid(2));
   }
 
   theSkybox = new Skybox();
@@ -98,6 +92,11 @@ window.onload = function init() {
   lightSpecular = vec4(0.4, 0.76, 1.0, 1.0);
   lightPosition = vec4(0.5, 0.5, 1.0, 0.0);
   theSun = new Sun();
+
+  // HTML elements ------------------------------------
+
+  displaySpeed = document.getElementById("display-speed");
+
 
   // GLSL variables -----------------------------------
 
@@ -157,6 +156,9 @@ window.onload = function init() {
     rotates = false;
   });
 
+
+
+
   window.addEventListener("keyup", function(e) {
     key.onKeyUp(e);
     if (!key.isDown(key.ACCELERATE)) accelerate = false;
@@ -167,8 +169,8 @@ window.onload = function init() {
   key = {
     pressed: {},
 
-    LEFT: 65,
-    UP: 87, //
+    LEFT: 65, // W
+    UP: 87, // A
     RIGHT: 68, // D
     DOWN: 83, // S
     FIRE: 17, // CTRL
@@ -192,17 +194,18 @@ window.onload = function init() {
 
 // Utility functions ---------------------------------
 
-function manageKeyInput() {
+function manageKeyInput(player) {
 
-    if (key.isDown(key.LEFT)) pitch -= rotateSpeed % 360;
-    if (key.isDown(key.RIGHT)) pitch += rotateSpeed % 360;
-    if (key.isDown(key.UP) && yaw < 88) yaw += rotateSpeed;
-    if (key.isDown(key.DOWN) && yaw > -88) yaw -= rotateSpeed % 360;
+    if (key.isDown(key.LEFT)) pitch -= player.lookSpeed % 360;
+    if (key.isDown(key.RIGHT)) pitch += player.lookSpeed % 360;
+    if (key.isDown(key.UP) && yaw < 88) yaw += player.lookSpeed;
+    if (key.isDown(key.DOWN) && yaw > -88) yaw -= player.lookSpeed;
     if (key.isDown(key.ACCELERATE)) {
-      accelerate = true;
-      xPos += 0.2*xDir;
-      yPos += 0.2*yDir;
-      zPos += 0.2*zDir;
+      // Space movement.. má alveg setja e-h hámark á velocity.
+      player.velocity = add(player.velocity,
+                            scale(player.acceleration, player.direction));
+
+      displaySpeed.innerText = player.getSpeed().toFixed(2);
     }
 }
 
@@ -227,13 +230,13 @@ function createRandomCoords() {
   // Svæðið er 200*200*200
   var randX, randY, randZ;
   while(tooCloseToStart) {
-    randX = -100 + Math.random() * 200;
-    randY = -100 + Math.random() * 200;
-    randZ = -100 + Math.random() * 200;
+    randX = -100 + Math.random() * 550;
+    randY = -100 + Math.random() * 550;
+    randZ = -100 + Math.random() * 550;
 
     // Viljum ekki leyfa asteroid að fá upphafsstað sem er of nálægt player.
-    if (!(randX < 10.0 && randX > -10.0 && randY < 10.0 && randY > -10.0 &&
-        randZ < 10.0 && randZ > -10.0)) tooCloseToStart = false;
+    if (!(randX < 20.0 && randX > -20.0 && randY < 20.0 && randY > -20.0 &&
+        randZ < 20.0 && randZ > -20.0)) tooCloseToStart = false;
   }
 
   return vec3(randX, randY, randZ);
@@ -304,10 +307,41 @@ function getCubeArrays(size) {
   };
 }
 
+function isCollision(asteroid, player) {
+  var roidX = asteroid.location[0];
+  var roidY = asteroid.location[1];
+  var roidZ = asteroid.location[2];
+  var side = asteroid.size;
+
+  if ((player.location[0] >= roidX - side && player.location[0] <= roidX + side)
+   && (player.location[1] >= roidY - side && player.location[1] <= roidY + side)
+   && (player.location[2] >= roidZ - side && player.location[2] <= roidZ + side)) {
+    // Collision!
+    return true;
+  }
+}
+
 
 // Object constructors ----------------------------------
 
-function Asteroid(scaling) {
+function Player() {
+  this.location = vec3();
+  this.direction = vec3(0.0, 0.0, 1.0);
+  this.acceleration = 0.01;
+  this.velocity = vec3();
+  this.weight = 80;
+
+  this.lookSpeed = 1.5;
+  this.lives = 5;
+
+  this.getSpeed = function() {
+    // calculate vector length
+    return Math.sqrt(Math.pow(this.velocity[0],2) + Math.pow(this.velocity[1], 2),
+                      + Math.pow(this.velocity[2], 2)) * 100;
+  }
+}
+
+function Asteroid(size) {
 
   var plyData = PR.read("models/asteroid.ply");
 
@@ -316,7 +350,7 @@ function Asteroid(scaling) {
   this.vertices = plyData.points;
   this.normals = plyData.normals;
 
-  this.size = this.vertices.length;
+  this.vSize = this.vertices.length;
 
   // World coordinates transformation -------------
 
@@ -334,8 +368,12 @@ function Asteroid(scaling) {
   this.rotateSpeed = 0.1 + Math.random() * 2;
 
   // 3 stærðir á asteroids í boði
-  this.scaleMatrix = scalem(scaling, scaling, scaling);
+  this.size = size;
+  this.scaleMatrix = scalem(size, size, size);
 
+  // Árekstur
+  // Notum til að reikna út nýtt velocity við árekstur.
+  this.weight = size * 100;
 
   // Lighting -------------------------------------
 
@@ -469,6 +507,8 @@ function Sun() {
   var locationVector = scale(3000, lightVector);
   this.translationMatrix = translate(locationVector);
 
+  this.rotation = 0.0;
+
   // Buffers -----------------------------------------
 
   this.iBuffer = gl.createBuffer();
@@ -538,15 +578,21 @@ function SpaceCube() {
 // Draw functions -----------------------------------
 
 function drawAsteroid(asteroid) {
+  if (isCollision(asteroid, thePlayer)) {
+
+
+    //asteroid.velocity = add(asteroid.velocity, scale(speed, vec3(xDir, yDir, zDir)));
+  }
+
   asteroid.theta += asteroid.rotateSpeed % 360;
   asteroid.location = add(asteroid.location, asteroid.velocity);
 
-  if(asteroid.location[0] > 100) asteroid.location[0] = -100;
-  if(asteroid.location[0] < -100) asteroid.location[0] = 100;
-  if(asteroid.location[1] > 100) asteroid.location[1] = -100;
-  if(asteroid.location[1] < -100) asteroid.location[1] = 100;
-  if(asteroid.location[2] > 100) asteroid.location[2] = -100;
-  if(asteroid.location[2] < -100) asteroid.location[2] = 100;
+  if(asteroid.location[0] > 300) asteroid.location[0] = -300;
+  if(asteroid.location[0] < -300) asteroid.location[0] = 300;
+  if(asteroid.location[1] > 300) asteroid.location[1] = -300;
+  if(asteroid.location[1] < -300) asteroid.location[1] = 300;
+  if(asteroid.location[2] > 300) asteroid.location[2] = -300;
+  if(asteroid.location[2] < -300) asteroid.location[2] = 300;
 
   var ctmRoid = mult(ctm, translate(asteroid.location));
   ctmRoid = mult(ctmRoid, asteroid.scaleMatrix);
@@ -563,7 +609,7 @@ function drawAsteroid(asteroid) {
 
   gl.bindBuffer(gl.ARRAY_BUFFER, asteroid.vertexBuffer);
   gl.vertexAttribPointer(locPosition, 4, gl.FLOAT, false, 0, 0);
-  gl.drawArrays(gl.TRIANGLES, 0, asteroid.size);
+  gl.drawArrays(gl.TRIANGLES, 0, asteroid.vSize);
 }
 
 function drawSkybox(skybox) {
@@ -590,9 +636,9 @@ function drawSun(sun) {
   gl.uniform1f(locFcoloringMode, 2.0);
 
   // Smá rotation til að fá smá líf í sólina, þó það sé óraunverulegt.
-  sunSpin += 0.02 % 360;
+  sun.rotation += 0.02 % 360;
   var ctmSun = mult(ctm, sun.translationMatrix);
-  ctmSun = mult(ctmSun, rotateY(sunSpin));
+  ctmSun = mult(ctmSun, rotateY(sun.rotation));
 
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSun));
 
@@ -626,68 +672,76 @@ function drawSpaceCube(cubeSide) {
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeSide.iBuffer);
 
   // 4x uppi
-  var ctmSide1 = mult(ctm, translate(0.0, 100.0, 100.0));
-  ctmSide1 = mult(ctmSide1, scalem(201.0, 1.0, 1.0));
+  var ctmSide1 = mult(ctm, translate(0.0, 300.0, 300.0));
+  ctmSide1 = mult(ctmSide1, scalem(601.0, 1.0, 1.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide1));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
-  var ctmSide2 = mult(ctm, translate(100.0, 100.0, 0.0));
-  ctmSide2 = mult(ctmSide2, scalem(1.0, 1.0, 199.0));
+  var ctmSide2 = mult(ctm, translate(300.0, 300.0, 0.0));
+  ctmSide2 = mult(ctmSide2, scalem(1.0, 1.0, 599.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide2));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
-  var ctmSide3 = mult(ctm, translate(0.0, 100.0, -100.0));
-  ctmSide3 = mult(ctmSide3, scalem(201.0, 1.0, 1.0));
+  var ctmSide3 = mult(ctm, translate(0.0, 300.0, -300.0));
+  ctmSide3 = mult(ctmSide3, scalem(601.0, 1.0, 1.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide3));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
-  var ctmSide4 = mult(ctm, translate(-100.0, 100.0, 0.0));
-  ctmSide4 = mult(ctmSide4, scalem(1.0, 1.0, 199.0));
+  var ctmSide4 = mult(ctm, translate(-300.0, 300.0, 0.0));
+  ctmSide4 = mult(ctmSide4, scalem(1.0, 1.0, 599.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide4));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
   // 4x niðri
-  var ctmSide5 = mult(ctm, translate(0.0, -100.0, 100.0));
-  ctmSide5 = mult(ctmSide5, scalem(201.0, 1.0, 1.0));
+  var ctmSide5 = mult(ctm, translate(0.0, -300.0, 300.0));
+  ctmSide5 = mult(ctmSide5, scalem(601.0, 1.0, 1.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide5));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
-  var ctmSide6 = mult(ctm, translate(100.0, -100.0, 0.0));
-  ctmSide6 = mult(ctmSide6, scalem(1.0, 1.0, 199.0));
+  var ctmSide6 = mult(ctm, translate(300.0, -300.0, 0.0));
+  ctmSide6 = mult(ctmSide6, scalem(1.0, 1.0, 599.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide6));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
-  var ctmSide7 = mult(ctm, translate(0.0, -100.0, -100.0));
-  ctmSide7 = mult(ctmSide7, scalem(201.0, 1.0, 1.0));
+  var ctmSide7 = mult(ctm, translate(0.0, -300.0, -300.0));
+  ctmSide7 = mult(ctmSide7, scalem(601.0, 1.0, 1.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide7));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
-  var ctmSide8 = mult(ctm, translate(-100.0, -100.0, 0.0));
-  ctmSide8 = mult(ctmSide8, scalem(1.0, 1.0, 199.0));
+  var ctmSide8 = mult(ctm, translate(-300.0, -300.0, 0.0));
+  ctmSide8 = mult(ctmSide8, scalem(1.0, 1.0, 599.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide8));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
   // 4x milli
-  var ctmSide9 = mult(ctm, translate(100.0, 0.0, 100.0));
-  ctmSide9 = mult(ctmSide9, scalem(1.0, 199.0, 1.0));
+  var ctmSide9 = mult(ctm, translate(300.0, 0.0, 300.0));
+  ctmSide9 = mult(ctmSide9, scalem(1.0, 599.0, 1.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide9));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
-  var ctmSide10 = mult(ctm, translate(-100.0, 0.0, 100.0));
-  ctmSide10 = mult(ctmSide10, scalem(1.0, 199.0, 1.0));
+  var ctmSide10 = mult(ctm, translate(-300.0, 0.0, 300.0));
+  ctmSide10 = mult(ctmSide10, scalem(1.0, 599.0, 1.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide10));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
-  var ctmSide11 = mult(ctm, translate(100.0, 0.0, -100.0));
-  ctmSide11 = mult(ctmSide11, scalem(1.0, 199.0, 1.0));
+  var ctmSide11 = mult(ctm, translate(300.0, 0.0, -300.0));
+  ctmSide11 = mult(ctmSide11, scalem(1.0, 599.0, 1.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide11));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
-  var ctmSide12 = mult(ctm, translate(-100.0, 0.0, -100.0));
-  ctmSide12 = mult(ctmSide12, scalem(1.0, 199.0, 1.0));
+  var ctmSide12 = mult(ctm, translate(-300.0, 0.0, -300.0));
+  ctmSide12 = mult(ctmSide12, scalem(1.0, 599.0, 1.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide12));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
+}
+
+function playerMovement(player) {
+  player.direction[0] = Math.cos(radians(pitch)) * Math.cos(radians(yaw));
+  player.direction[1] = Math.sin(radians(yaw));
+  player.direction[2] = Math.sin(radians(pitch)) * Math.cos(radians(yaw));
+
+  player.location = add(player.location, player.velocity);
 }
 
 function render() {
@@ -696,13 +750,10 @@ function render() {
   // Setjum þetta alltaf ef notandi skyldi breyta gluggastærð (aspect ratio).
   setPerspective();
 
-  // Reiknum út áhorfsvigurinn.
-  xDir = Math.cos(radians(pitch)) * Math.cos(radians(yaw));
-  yDir = Math.sin(radians(yaw));
-  zDir = Math.sin(radians(pitch)) * Math.cos(radians(yaw));
+  playerMovement(thePlayer);
 
-  ctm = lookAt(vec3(xPos, yPos, zPos),
-                vec3(xPos+xDir, yPos+yDir, zPos+zDir),
+  ctm = lookAt(thePlayer.location,
+                add(thePlayer.location, thePlayer.direction),
                 vec3(0.0, 1.0, 0.0));
 
   // Færum ljósið með þ.a. það komi alltaf frá sólinni.
@@ -715,6 +766,7 @@ function render() {
   gl.activeTexture(gl.TEXTURE1);
   gl.bindTexture(gl.TEXTURE_CUBE_MAP, theSkybox.texture);
 
+
   drawSkybox(theSkybox);
   drawSun(theSun);
 
@@ -724,7 +776,7 @@ function render() {
 
   drawSpaceCube(theSpaceCube);
 
-  manageKeyInput();
+  manageKeyInput(thePlayer);
 
   window.requestAnimFrame(render);
 }
