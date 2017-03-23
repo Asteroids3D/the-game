@@ -372,7 +372,6 @@ function Player() {
       lasers.velocity = scale(lasers.speed, this.direction);
       lasers.isActive = true;
       lasers.location = this.location;
-      lasers.ttl = 500;
       this.nextLasers = (this.nextLasers + 1) % 4;
     }
   }
@@ -386,7 +385,6 @@ function LaserBeams() {
   this.arrays = getCubeArrays([1.0, 1.0, 1.0]);
   this.color = vec4(1.0, 0.0, 0.0, 1.0);
   this.isActive = false;
-  this.ttl = 500;
 
   // World coordinates transformation -----------------
 
@@ -659,11 +657,11 @@ function drawAsteroid(asteroid) {
   asteroid.theta += asteroid.rotateSpeed % 360;
   asteroid.location = add(asteroid.location, asteroid.velocity);
 
-	// Wrap asteroids around
-	for (var i = 0; i < 3; i++) {
-		if (Math.abs(asteroid.location[i]) > playBoxVertexRadius)
-			asteroid.location[i] = -1 * (asteroid.location[i] - asteroid.location[i] % playBoxVertexRadius);
-	}
+  // Wrap asteroids around
+  for (var i = 0; i < 3; i++) {
+    if (Math.abs(asteroid.location[i]) > playBoxVertexRadius)
+      asteroid.location[i] = -1 * (asteroid.location[i] - asteroid.location[i] % playBoxVertexRadius);
+  }
 
   var ctmRoid = mult(ctm, translate(asteroid.location));
   ctmRoid = mult(ctmRoid, asteroid.scaleMatrix);
@@ -808,14 +806,18 @@ function drawSpaceCube(cubeSide) {
 }
 
 function drawLasers(lasers) {
-  if (lasers.ttl > 0) {
+  // Check if laser is outside of playbox
+  for (var i = 0; i < 3; i++)
+    if (Math.abs(lasers.location[i]) > playBoxVertexRadius)
+      lasers.isActive = false;
+
+  if (lasers.isActive) {
     gl.uniform1f(locVcoloringMode, 3.0);
     gl.uniform1f(locFcoloringMode, 3.0);
 
     gl.uniform4fv(locColor, lasers.color);
 
     lasers.location = add(lasers.location, lasers.velocity);
-
 
     var ctmLasers = mult(ctm, translate(lasers.location));
     ctmLasers = mult(ctmLasers, lasers.scaleMatrix);
@@ -835,11 +837,8 @@ function drawLasers(lasers) {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, lasers.iBuffer);
     gl.drawElements(gl.TRIANGLES, lasers.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
-    lasers.ttl--;
     gl.uniform1f(locVcoloringMode, 0.0);
     gl.uniform1f(locFcoloringMode, 0.0);
-  } else {
-    lasers.isActive = false;
   }
 }
 
@@ -859,11 +858,12 @@ function render() {
   // Setjum þetta alltaf ef notandi skyldi breyta gluggastærð (aspect ratio).
   setPerspective();
 
-  playerMovement(thePlayer);
+    playerMovement(thePlayer);
 
   ctm = lookAt(thePlayer.location,
                 add(thePlayer.location, thePlayer.direction),
                 vec3(0.0, 1.0, 0.0));
+
 
   // Færum ljósið með þ.a. það komi alltaf frá sólinni.
   gl.uniform4fv(locLightPos, mult(ctm, lightPosition));
@@ -883,12 +883,12 @@ function render() {
     drawAsteroid(roids[i]);
   }
 
-  for (var i = 0; i < thePlayer.numberOfLasers; i++) {
+  drawSpaceCube(theSpaceCube);
+
+	for (var i = 0; i < thePlayer.numberOfLasers; i++) {
     if (thePlayer.Lasers[i].isActive)
       drawLasers(thePlayer.Lasers[i]);
   }
-
-  drawSpaceCube(theSpaceCube);
 
   manageKeyInput(thePlayer);
 
