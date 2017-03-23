@@ -317,16 +317,31 @@ function getCubeArrays(size) {
 }
 
 function isCollision(asteroid, player) {
+  function checkCollisionWithObject(objLocation) {
+    if ((objLocation[0] >= roidX - size && objLocation[0] <= roidX + size)
+     && (objLocation[1] >= roidY - size && objLocation[1] <= roidY + size)
+     && (objLocation[2] >= roidZ - size && objLocation[2] <= roidZ + size)) {
+      // Object collision!
+      return true;
+    }
+  }
+
   var roidX = asteroid.location[0];
   var roidY = asteroid.location[1];
   var roidZ = asteroid.location[2];
   var size = asteroid.size;
 
-  if ((player.location[0] >= roidX - size && player.location[0] <= roidX + size)
-   && (player.location[1] >= roidY - size && player.location[1] <= roidY + size)
-   && (player.location[2] >= roidZ - size && player.location[2] <= roidZ + size)) {
-    // Collision!
-    return true;
+  if (checkCollisionWithObject(player.location)) {
+    console.log("Player should die");
+  }
+
+  for (var i = 0; i < player.Lasers.length; i++) {
+    var laser = player.Lasers[i];
+    if (laser.isActive) {
+      if (checkCollisionWithObject(player.Lasers[i].location)) {
+        console.log("Asteroid should splinter or die");
+      }
+    }
   }
 }
 
@@ -657,6 +672,8 @@ function SpaceCube() {
 // Draw functions -----------------------------------
 
 function drawAsteroid(asteroid) {
+
+  // Check if this asteroid is colliding with the player or his lasers
   if (isCollision(asteroid, thePlayer)) {
     console.log("you ded");
 
@@ -833,11 +850,6 @@ function drawLasers(lasers) {
     ctmLasers = mult(ctmLasers, lasers.scaleMatrix);
     gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmLasers));
 
-
-    // check asteroid collision
-    // var collision = isCollision();
-
-
     gl.bindBuffer(gl.ARRAY_BUFFER, lasers.vBuffer);
     gl.vertexAttribPointer(locPosition, 3, gl.FLOAT, false, 0, 0);
 
@@ -851,8 +863,6 @@ function drawLasers(lasers) {
     gl.uniform1f(locFcoloringMode, 0.0);
   }
 }
-
-
 
 function playerMovement(player) {
   player.direction[0] = Math.cos(radians(pitch)) * Math.cos(radians(yaw));
