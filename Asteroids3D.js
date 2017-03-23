@@ -336,9 +336,10 @@ function isCollision(asteroid, player) {
   }
 
   for (var i = 0; i < player.Lasers.length; i++) {
-    var laser = player.Lasers[i];
-    if (laser.isActive) {
-      if (checkCollisionWithObject(player.Lasers[i].location)) {
+    var lasers = player.Lasers[i];
+    if (lasers.isActive) {
+      if (checkCollisionWithObject(lasers.laser1Location)
+          || checkCollisionWithObject(lasers.laser2Location)) {
         console.log("Asteroid should splinter or die");
       }
     }
@@ -371,30 +372,33 @@ function Player() {
 
   this.numberOfLasers = 4;
   this.Lasers = [];
-  this.nextLasers = 0;
 
   for (var i = 0; i < 4; i++) {
     this.Lasers.push(new LaserBeams());
   }
 
   this.fireLasers = function() {
-    var lasers = this.Lasers[this.nextLasers];
+    for (var i = 0; i < this.numberOfLasers; i++) {
+      if (!this.Lasers[i].isActive) {
+        var lasers = this.Lasers[i];
+        lasers.velocity = add(this.velocity, scale(lasers.speed, this.direction));
+        lasers.isActive = true;
+        //lasers.location = this.location;
 
-    if (!lasers.isActive) {
-      lasers.direction = this.direction;
-      lasers.velocity = add(this.velocity, scale(lasers.speed, this.direction));
-      lasers.isActive = true;
-      lasers.location = this.location;
-      this.nextLasers = (this.nextLasers + 1) % 4;
+        // laser rotation
+        var rads = Math.atan2(Math.sqrt(dot(cross(this.direction, lasers.initDirection),
+                                            cross(this.direction, lasers.initDirection))),
+                              dot(this.direction, lasers.initDirection));
+        var degrees = -rads * 180 / Math.PI;
+        var axis = cross(this.direction, lasers.initDirection);
 
-      // laser rotation
-      var rads = Math.atan2(Math.sqrt(dot(cross(this.direction, lasers.initDirection),
-                                          cross(this.direction, lasers.initDirection))),
-                            dot(this.direction, lasers.initDirection));
-      var degrees = -rads * 180 / Math.PI;
-      var axis = cross(this.direction, lasers.initDirection);
 
-      lasers.rotationMatrix = rotate(degrees, axis);
+        lasers.laser1Location = add(this.location, scale(5, axis));
+        lasers.laser2Location = subtract(this.location, scale(5, axis));
+        lasers.transformationMatrix = mult(rotate(degrees, axis), lasers.scaleMatrix);
+
+        return;
+      }
     }
   }
 }
@@ -410,12 +414,14 @@ function LaserBeams() {
 
   // World coordinates transformation -----------------
 
-  this.location = vec3();
+  //this.location = vec3();
+  this.laser1Location = vec3();
+  this.laser2Location = vec3();
   this.direction = vec3();
-  this.speed = 2.5;
+  this.speed = 4.0;
   this.velocity = vec3();
-  this.rotationMatrix = vec3();
-  this.scaleMatrix = scalem(1.0, 1.0, 10.0);
+  this.transformationMatrix = mat4();
+  this.scaleMatrix = scalem(2.0, 2.0, 20.0);
   this.initDirection = vec3(0.0, 0.0, 1.0);
 
   // Buffers ------------------------------------------
@@ -834,21 +840,13 @@ function drawSpaceCube(cubeSide) {
 function drawLasers(lasers) {
   // Check if laser is outside of playbox
   for (var i = 0; i < 3; i++)
-    if (Math.abs(lasers.location[i]) > playBoxVertexRadius)
+    if (Math.abs(lasers.laser1Location[i]) > playBoxVertexRadius)
       lasers.isActive = false;
 
   if (lasers.isActive) {
     gl.uniform1f(locVcoloringMode, 3.0);
     gl.uniform1f(locFcoloringMode, 3.0);
-
     gl.uniform4fv(locColor, lasers.color);
-
-    lasers.location = add(lasers.location, lasers.velocity);
-
-    var ctmLasers = mult(ctm, translate(lasers.location));
-    ctmLasers = mult(ctmLasers, lasers.rotationMatrix);
-    ctmLasers = mult(ctmLasers, lasers.scaleMatrix);
-    gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmLasers));
 
     gl.bindBuffer(gl.ARRAY_BUFFER, lasers.vBuffer);
     gl.vertexAttribPointer(locPosition, 3, gl.FLOAT, false, 0, 0);
@@ -857,6 +855,20 @@ function drawLasers(lasers) {
     gl.vertexAttribPointer(locNormal, 3, gl.FLOAT, false, 0, 0);
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, lasers.iBuffer);
+
+    lasers.laser1Location = add(lasers.laser1Location, lasers.velocity);
+    lasers.laser2Location = add(lasers.laser2Location, lasers.velocity);
+
+    var ctmLaser1 = mult(ctm, translate(lasers.laser1Location));
+    var ctmLaser2 = mult(ctm, translate(lasers.laser2Location));
+    ctmLaser1 = mult(ctmLaser1, lasers.transformationMatrix);
+    ctmLaser2 = mult(ctmLaser2, lasers.transformationMatrix);
+
+    gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmLaser1));
+
+    gl.drawElements(gl.TRIANGLES, lasers.arrays.iSize, gl.UNSIGNED_BYTE, 0);
+
+    gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmLaser2));
     gl.drawElements(gl.TRIANGLES, lasers.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
     gl.uniform1f(locVcoloringMode, 0.0);
