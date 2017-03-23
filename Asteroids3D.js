@@ -861,7 +861,14 @@ function playerMovement(player) {
   player.direction[1] = Math.sin(radians(yaw));
   player.direction[2] = Math.sin(radians(pitch)) * Math.cos(radians(yaw));
 
-  player.location = add(player.location, player.velocity);
+	var newLocation = add(player.location, player.velocity);
+	// Wrap player if applicable
+  for (var i = 0; i < 3; i++) {
+    if (Math.abs(newLocation[i]) > playBoxVertexRadius)
+      newLocation[i] = -1 * (newLocation[i] - newLocation[i] % playBoxVertexRadius);
+	}
+
+  player.location = newLocation;
 }
 
 function render() {
@@ -870,7 +877,7 @@ function render() {
   // Setjum þetta alltaf ef notandi skyldi breyta gluggastærð (aspect ratio).
   setPerspective();
 
-    playerMovement(thePlayer);
+  playerMovement(thePlayer);
 
   ctm = lookAt(thePlayer.location,
                 add(thePlayer.location, thePlayer.direction),
