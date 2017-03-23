@@ -41,6 +41,8 @@ var displaySpeed;
 
 var fired;
 
+var playBoxVertexRadius;
+
 window.onload = function init() {
 
   // Housekeeping ----------------------------------
@@ -65,6 +67,7 @@ window.onload = function init() {
   rotates = false;
   xSpin = ySpin = oldX = oldY = 0.0; // Ekki í notkun eins og er.
 
+	playBoxVertexRadius = 300;
   pitch = yaw = 0.0;
   rotateSpeed = 1.5;
   aspect = gl.clientWidth / gl.clientHeight;
@@ -656,12 +659,11 @@ function drawAsteroid(asteroid) {
   asteroid.theta += asteroid.rotateSpeed % 360;
   asteroid.location = add(asteroid.location, asteroid.velocity);
 
-  if(asteroid.location[0] > 300) asteroid.location[0] = -300;
-  if(asteroid.location[0] < -300) asteroid.location[0] = 300;
-  if(asteroid.location[1] > 300) asteroid.location[1] = -300;
-  if(asteroid.location[1] < -300) asteroid.location[1] = 300;
-  if(asteroid.location[2] > 300) asteroid.location[2] = -300;
-  if(asteroid.location[2] < -300) asteroid.location[2] = 300;
+	// Wrap asteroids around
+	for (var i = 0; i < 3; i++) {
+		if (Math.abs(asteroid.location[i]) > playBoxVertexRadius)
+			asteroid.location[i] = -1 * (asteroid.location[i] - asteroid.location[i] % playBoxVertexRadius);
+	}
 
   var ctmRoid = mult(ctm, translate(asteroid.location));
   ctmRoid = mult(ctmRoid, asteroid.scaleMatrix);
@@ -741,64 +743,64 @@ function drawSpaceCube(cubeSide) {
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeSide.iBuffer);
 
   // 4x uppi
-  var ctmSide1 = mult(ctm, translate(0.0, 300.0, 300.0));
+  var ctmSide1 = mult(ctm, translate(0.0, playBoxVertexRadius, playBoxVertexRadius));
   ctmSide1 = mult(ctmSide1, scalem(601.0, 1.0, 1.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide1));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
-  var ctmSide2 = mult(ctm, translate(300.0, 300.0, 0.0));
+  var ctmSide2 = mult(ctm, translate(playBoxVertexRadius, playBoxVertexRadius, 0.0));
   ctmSide2 = mult(ctmSide2, scalem(1.0, 1.0, 599.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide2));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
-  var ctmSide3 = mult(ctm, translate(0.0, 300.0, -300.0));
+  var ctmSide3 = mult(ctm, translate(0.0, playBoxVertexRadius, -playBoxVertexRadius));
   ctmSide3 = mult(ctmSide3, scalem(601.0, 1.0, 1.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide3));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
-  var ctmSide4 = mult(ctm, translate(-300.0, 300.0, 0.0));
+  var ctmSide4 = mult(ctm, translate(-playBoxVertexRadius, playBoxVertexRadius, 0.0));
   ctmSide4 = mult(ctmSide4, scalem(1.0, 1.0, 599.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide4));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
   // 4x niðri
-  var ctmSide5 = mult(ctm, translate(0.0, -300.0, 300.0));
+  var ctmSide5 = mult(ctm, translate(0.0, -playBoxVertexRadius, playBoxVertexRadius));
   ctmSide5 = mult(ctmSide5, scalem(601.0, 1.0, 1.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide5));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
-  var ctmSide6 = mult(ctm, translate(300.0, -300.0, 0.0));
+  var ctmSide6 = mult(ctm, translate(playBoxVertexRadius, -playBoxVertexRadius, 0.0));
   ctmSide6 = mult(ctmSide6, scalem(1.0, 1.0, 599.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide6));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
-  var ctmSide7 = mult(ctm, translate(0.0, -300.0, -300.0));
+  var ctmSide7 = mult(ctm, translate(0.0, -playBoxVertexRadius, -playBoxVertexRadius));
   ctmSide7 = mult(ctmSide7, scalem(601.0, 1.0, 1.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide7));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
-  var ctmSide8 = mult(ctm, translate(-300.0, -300.0, 0.0));
+  var ctmSide8 = mult(ctm, translate(-playBoxVertexRadius, -playBoxVertexRadius, 0.0));
   ctmSide8 = mult(ctmSide8, scalem(1.0, 1.0, 599.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide8));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
   // 4x milli
-  var ctmSide9 = mult(ctm, translate(300.0, 0.0, 300.0));
+  var ctmSide9 = mult(ctm, translate(playBoxVertexRadius, 0.0, playBoxVertexRadius));
   ctmSide9 = mult(ctmSide9, scalem(1.0, 599.0, 1.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide9));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
-  var ctmSide10 = mult(ctm, translate(-300.0, 0.0, 300.0));
+  var ctmSide10 = mult(ctm, translate(-playBoxVertexRadius, 0.0, playBoxVertexRadius));
   ctmSide10 = mult(ctmSide10, scalem(1.0, 599.0, 1.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide10));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
-  var ctmSide11 = mult(ctm, translate(300.0, 0.0, -300.0));
+  var ctmSide11 = mult(ctm, translate(playBoxVertexRadius, 0.0, -playBoxVertexRadius));
   ctmSide11 = mult(ctmSide11, scalem(1.0, 599.0, 1.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide11));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
 
-  var ctmSide12 = mult(ctm, translate(-300.0, 0.0, -300.0));
+  var ctmSide12 = mult(ctm, translate(-playBoxVertexRadius, 0.0, -playBoxVertexRadius));
   ctmSide12 = mult(ctmSide12, scalem(1.0, 599.0, 1.0));
   gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmSide12));
   gl.drawElements(gl.TRIANGLES, cubeSide.arrays.iSize, gl.UNSIGNED_BYTE, 0);
