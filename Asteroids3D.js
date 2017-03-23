@@ -377,7 +377,7 @@ function Player() {
       // laser rotation
       var rads = Math.atan2(Math.sqrt(dot(cross(this.direction, lasers.initDirection),
                                           cross(this.direction, lasers.initDirection))),
-                            dot(this.direction, start));
+                            dot(this.direction, lasers.initDirection));
       var degrees = -rads * 180 / Math.PI;
       var axis = cross(this.direction, lasers.initDirection);
 
