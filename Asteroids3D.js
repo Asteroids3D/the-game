@@ -373,6 +373,15 @@ function Player() {
       lasers.isActive = true;
       lasers.location = this.location;
       this.nextLasers = (this.nextLasers + 1) % 4;
+
+      // laser rotation
+      var rads = Math.atan2(Math.sqrt(dot(cross(this.direction, lasers.initDirection),
+                                          cross(this.direction, lasers.initDirection))),
+                            dot(this.direction, start));
+      var degrees = -rads * 180 / Math.PI;
+      var axis = cross(this.direction, lasers.initDirection);
+
+      lasers.rotationMatrix = rotate(degrees, axis);
     }
   }
 }
@@ -392,7 +401,9 @@ function LaserBeams() {
   this.direction = vec3();
   this.speed = 2.5;
   this.velocity = vec3();
+  this.rotationMatrix = vec3();
   this.scaleMatrix = scalem(1.0, 1.0, 10.0);
+  this.initDirection = vec3(0.0, 0.0, 1.0);
 
   // Buffers ------------------------------------------
 
@@ -820,6 +831,7 @@ function drawLasers(lasers) {
     lasers.location = add(lasers.location, lasers.velocity);
 
     var ctmLasers = mult(ctm, translate(lasers.location));
+    ctmLasers = mult(ctmLasers, lasers.rotationMatrix);
     ctmLasers = mult(ctmLasers, lasers.scaleMatrix);
     gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmLasers));
 
