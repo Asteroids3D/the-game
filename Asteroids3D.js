@@ -179,8 +179,8 @@ window.onload = function init() {
     UP: 87, // A
     RIGHT: 68, // D
     DOWN: 83, // S
-    FIRE: 17, // CTRL
-    ACCELERATE: 32, // SPACE
+    FIRE: 32, // SPACE
+    ACCELERATE: 16, // SHIFT
 
     isDown: function(keyCode) {
       return this.pressed[keyCode]
@@ -190,7 +190,7 @@ window.onload = function init() {
     },
     onKeyUp: function(e) {
       delete this.pressed[e.keyCode];
-      if (e.keyCode == 17) fired = false;
+      if (e.keyCode == key.FIRE) fired = false;
     },
 
   }
