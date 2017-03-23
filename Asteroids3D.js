@@ -138,7 +138,7 @@ window.onload = function init() {
 
   // Langt zFar svo sólin geti verið world coord based.
   // Minna vesen svona.
-  var persp = perspective(50.0, aspect, 0.1, 5000.0);
+  var persp = perspective(80.0, aspect, 0.1, 5000.0);
   gl.uniformMatrix4fv(locProjMatrix, false, flatten(persp));
 
   // Erum ekkert að nota músina eina og er, en það má alveg hafa það með ?
@@ -161,8 +161,6 @@ window.onload = function init() {
   window.addEventListener("mouseup", function() {
     rotates = false;
   });
-
-
 
 
   window.addEventListener("keyup", function(e) {
@@ -229,7 +227,7 @@ function setPerspective() {
     canvas.width  = displayWidth;
     canvas.height = displayHeight;
 
-    proj = perspective( 50.0, aspect, 0.01, 5000.0 );
+    proj = perspective( 80.0, aspect, 0.01, 5000.0 );
     gl.uniformMatrix4fv(locProjMatrix, false, flatten(proj));
 
     gl.viewport( 0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight );
@@ -322,11 +320,11 @@ function isCollision(asteroid, player) {
   var roidX = asteroid.location[0];
   var roidY = asteroid.location[1];
   var roidZ = asteroid.location[2];
-  var side = asteroid.size;
+  var size = asteroid.size;
 
-  if ((player.location[0] >= roidX - side && player.location[0] <= roidX + side)
-   && (player.location[1] >= roidY - side && player.location[1] <= roidY + side)
-   && (player.location[2] >= roidZ - side && player.location[2] <= roidZ + side)) {
+  if ((player.location[0] >= roidX - size && player.location[0] <= roidX + size)
+   && (player.location[1] >= roidY - size && player.location[1] <= roidY + size)
+   && (player.location[2] >= roidZ - size && player.location[2] <= roidZ + size)) {
     // Collision!
     return true;
   }
@@ -660,7 +658,7 @@ function SpaceCube() {
 
 function drawAsteroid(asteroid) {
   if (isCollision(asteroid, thePlayer)) {
-
+    console.log("you ded");
 
     //asteroid.velocity = add(asteroid.velocity, scale(speed, vec3(xDir, yDir, zDir)));
   }
