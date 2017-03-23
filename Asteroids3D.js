@@ -30,7 +30,7 @@ var roids;
 
 var normalMatrix;
 var theSun;
-var locAltColor;
+var locColor;
 
 var locTexCoords;
 
@@ -38,6 +38,8 @@ var theSpaceCube;
 var collision;
 var thePlayer;
 var displaySpeed;
+
+var fired;
 
 window.onload = function init() {
 
@@ -66,19 +68,20 @@ window.onload = function init() {
   pitch = yaw = 0.0;
   rotateSpeed = 1.5;
   aspect = gl.clientWidth / gl.clientHeight;
-  numberOfRoids = 60; // multiple of 3
+  numberOfRoids = 36; // multiple of 3
   roids = [];
+  fired = false;
 
   thePlayer = new Player();
 
   for (var i = 0; i < numberOfRoids / 3; i++) {
-    roids.push(new Asteroid(8));
+    roids.push(new Asteroid(12));
   }
   for (var i = 0; i < numberOfRoids / 3; i++) {
-    roids.push(new Asteroid(4));
+    roids.push(new Asteroid(6));
   }
   for (var i = 0; i < numberOfRoids / 3; i++) {
-    roids.push(new Asteroid(2));
+    roids.push(new Asteroid(3));
   }
 
   theSkybox = new Skybox();
@@ -105,7 +108,7 @@ window.onload = function init() {
 
   locFcoloringMode = gl.getUniformLocation(program, "fColoringMode");
   locVcoloringMode = gl.getUniformLocation(program, "vColoringMode");
-  locAltColor = gl.getUniformLocation(program, "altColor");
+  locColor = gl.getUniformLocation(program, "color");
 
   locTexture2D = gl.getUniformLocation(program, "sunTexture");
   locSkybox = gl.getUniformLocation(program, "skybox");
@@ -184,6 +187,7 @@ window.onload = function init() {
     },
     onKeyUp: function(e) {
       delete this.pressed[e.keyCode];
+      if (e.keyCode == 17) fired = false;
     },
 
   }
@@ -206,6 +210,10 @@ function manageKeyInput(player) {
                             scale(player.acceleration, player.direction));
 
       displaySpeed.innerText = player.getSpeed().toFixed(2);
+    }
+    if (key.isDown(key.FIRE)) {
+      if (fired == false) thePlayer.fireLasers();
+      fired = true;
     }
 }
 
@@ -325,21 +333,82 @@ function isCollision(asteroid, player) {
 // Object constructors ----------------------------------
 
 function Player() {
+
+  this.lives = 5;
+
+  // Movement ---------------------------------
+
   this.location = vec3();
   this.direction = vec3(0.0, 0.0, 1.0);
   this.acceleration = 0.01;
   this.velocity = vec3();
   this.weight = 80;
-
   this.lookSpeed = 1.5;
-  this.lives = 5;
 
   this.getSpeed = function() {
-    // calculate vector length
+    // calculate velocity vector length.
     return Math.sqrt(Math.pow(this.velocity[0],2) + Math.pow(this.velocity[1], 2),
                       + Math.pow(this.velocity[2], 2)) * 100;
   }
+
+  // Lasers --------------------------------------
+
+  this.numberOfLasers = 4;
+  this.Lasers = [];
+  this.nextLasers = 0;
+
+  for (var i = 0; i < 4; i++) {
+    this.Lasers.push(new LaserBeams());
+  }
+
+  this.fireLasers = function() {
+    var lasers = this.Lasers[this.nextLasers];
+
+    if (!lasers.isActive) {
+      lasers.direction = this.direction;
+      lasers.velocity = scale(lasers.speed, this.direction);
+      lasers.isActive = true;
+      lasers.location = this.location;
+      lasers.ttl = 500;
+      this.nextLasers = (this.nextLasers + 1) % 4;
+    }
+  }
 }
+
+
+function LaserBeams() {
+
+  // Object data --------------------------------------
+
+  this.arrays = getCubeArrays([1.0, 1.0, 1.0]);
+  this.color = vec4(1.0, 0.0, 0.0, 1.0);
+  this.isActive = false;
+  this.ttl = 500;
+
+  // World coordinates transformation -----------------
+
+  this.location = vec3();
+  this.direction = vec3();
+  this.speed = 2.5;
+  this.velocity = vec3();
+  this.scaleMatrix = scalem(1.0, 1.0, 10.0);
+
+  // Buffers ------------------------------------------
+
+  this.nBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, this.nBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(this.arrays.normals), gl.STATIC_DRAW);
+
+  this.vBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(this.arrays.vertices), gl.STATIC_DRAW);
+
+  this.iBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.iBuffer);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint8Array(this.arrays.index), gl.STATIC_DRAW);
+
+}
+
 
 function Asteroid(size) {
 
@@ -736,6 +805,44 @@ function drawSpaceCube(cubeSide) {
 
 }
 
+function drawLasers(lasers) {
+  if (lasers.ttl > 0) {
+    gl.uniform1f(locVcoloringMode, 3.0);
+    gl.uniform1f(locFcoloringMode, 3.0);
+
+    gl.uniform4fv(locColor, lasers.color);
+
+    lasers.location = add(lasers.location, lasers.velocity);
+
+
+    var ctmLasers = mult(ctm, translate(lasers.location));
+    ctmLasers = mult(ctmLasers, lasers.scaleMatrix);
+    gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmLasers));
+
+
+    // check asteroid collision
+    // var collision = isCollision();
+
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, lasers.vBuffer);
+    gl.vertexAttribPointer(locPosition, 3, gl.FLOAT, false, 0, 0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, lasers.nBuffer);
+    gl.vertexAttribPointer(locNormal, 3, gl.FLOAT, false, 0, 0);
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, lasers.iBuffer);
+    gl.drawElements(gl.TRIANGLES, lasers.arrays.iSize, gl.UNSIGNED_BYTE, 0);
+
+    lasers.ttl--;
+    gl.uniform1f(locVcoloringMode, 0.0);
+    gl.uniform1f(locFcoloringMode, 0.0);
+  } else {
+    lasers.isActive = false;
+  }
+}
+
+
+
 function playerMovement(player) {
   player.direction[0] = Math.cos(radians(pitch)) * Math.cos(radians(yaw));
   player.direction[1] = Math.sin(radians(yaw));
@@ -772,6 +879,11 @@ function render() {
 
   for (var i = 0; i < roids.length; i++) {
     drawAsteroid(roids[i]);
+  }
+
+  for (var i = 0; i < thePlayer.numberOfLasers; i++) {
+    if (thePlayer.Lasers[i].isActive)
+      drawLasers(thePlayer.Lasers[i]);
   }
 
   drawSpaceCube(theSpaceCube);

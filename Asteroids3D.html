@@ -38,9 +38,11 @@
         } else if (vColoringMode == 1.0) {
           gl_Position = projMatrix * mat4(mat3(mvMatrix)) * vPosition.xyzw;
 
-        } else {
+        } else if (vColoringMode == 2.0) {
           gl_Position = projMatrix * mvMatrix * vPosition;
           texCoords2D = vTexCoords2D;
+        } else {
+          gl_Position = projMatrix * mvMatrix * vPosition;
         }
 
         texCoords3D = vPosition.xyz;
@@ -52,7 +54,7 @@
 
 
       uniform float fColoringMode;
-      uniform vec4 altColor;
+      uniform vec4 color;
       uniform sampler2D sunTexture;
       uniform samplerCube skybox;
 
@@ -93,6 +95,8 @@
         else if (fColoringMode == 2.0) {
           gl_FragColor = texture2D(sunTexture, texCoords2D);
           //gl_FragColor = altColor;
+        } else {
+          gl_FragColor = color;
         }
       }
     </script>
