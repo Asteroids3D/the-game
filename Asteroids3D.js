@@ -369,7 +369,8 @@ function Player() {
 
     if (!lasers.isActive) {
       lasers.direction = this.direction;
-      lasers.velocity = scale(lasers.speed, this.direction);
+      lasers.velocity = add(this.velocity, scale(lasers.speed, this.direction));
+      console.log(lasers.velocity);
       lasers.isActive = true;
       lasers.location = this.location;
       this.nextLasers = (this.nextLasers + 1) % 4;
