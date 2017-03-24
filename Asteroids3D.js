@@ -43,6 +43,11 @@ var fired;
 
 var playBoxVertexRadius;
 
+var asteroidModel;
+var laserBeamModel;
+
+var debugCounter = 0;
+
 window.onload = function init() {
 
   // Housekeeping ----------------------------------
@@ -63,6 +68,9 @@ window.onload = function init() {
   // Initializations ---------------------------------
 
   PR = PlyReader();
+
+  asteroidModel = new AsteroidModel();
+  laserBeamModel = new LaserBeamModel();
 
   xSpin = ySpin = oldX = oldY = 0.0; // Ekki í notkun eins og er.
 
@@ -256,7 +264,6 @@ function createRandomCoords() {
   return vec3(randX, randY, randZ);
 }
 
-
 function getCubeArrays(size) {
   var x = -(size[0] / 2);
   var y = -(size[1] / 2);
@@ -321,6 +328,8 @@ function getCubeArrays(size) {
   };
 }
 
+
+
 function isCollision(asteroid, player) {
   function checkCollisionWithObject(objLocation) {
     if ((objLocation[0] >= roidX - size && objLocation[0] <= roidX + size)
@@ -349,30 +358,49 @@ function isCollision(asteroid, player) {
 
         // Create new asteroids
         if (asteroid.size > 3) {
-          asteroid.child1.location = asteroid.location;
-          asteroid.child1.direction = lasers.sideNormal;
-          asteroid.child1.setVelocity();
-
-          asteroid.child2.location = asteroid.location;
-          asteroid.child2.direction = negate(lasers.sideNormal);
-          asteroid.child2.setVelocity();
-
-          roids.push(asteroid.child1);
-          roids.push(asteroid.child2);
+          roids.push(new Asteroid(asteroid.size / 2,
+                                    asteroid.location,
+                                    lasers.sideNormal));
+          roids.push(new Asteroid(asteroid.size / 2,
+                                    asteroid.location,
+                                    negate(lasers.sideNormal)));
         }
 
         // Cleanup dead asteroid
         gl.deleteBuffer(asteroid.normalsBuffer);
         gl.deleteBuffer(asteroid.vertexBuffer);
+        debugger;
         var index  = roids.indexOf(asteroid);
         roids.splice(index, 1);
         asteroid = null;
 
         // give player points & show on screen.
         player.points += 1;
+
+        return true;
       }
     }
   }
+}
+
+// Models for .ply files -----------------------------
+// Svo það sé ekki hlaðið inn úr .ply skrá fyrir hvert object.
+
+function AsteroidModel() {
+
+  var plyData = PR.read("models/asteroid.ply");
+
+  this.vertices = plyData.points;
+  this.normals = plyData.normals;
+}
+
+function LaserBeamModel() {
+
+  var plyData = PR.read("models/beam1.ply");
+
+  this.vertices = plyData.points;
+  this.normals = plyData.normals;
+
 }
 
 
@@ -444,12 +472,10 @@ function Player() {
 
 function LaserBeams() {
 
-  var plyData = PR.read("models/beam1.ply");
-
   // Object data ---------------------------------
 
-  this.vertices = plyData.points;
-  this.normals = plyData.normals;
+  this.vertices = laserBeamModel.vertices;
+  this.normals = laserBeamModel.normals;
 
   this.vSize = this.vertices.length;
 
@@ -480,37 +506,30 @@ function LaserBeams() {
 
 }
 
-function Asteroid(size, firstborn = true) {
+function Asteroid(size,
+                  location = createRandomCoords(),
+                  direction = normalize(createRandomCoords())) {
 
-  var plyData = PR.read("models/asteroid.ply");
+  this.counter = debugCounter;
+  debugCounter++;
 
   // Object data ---------------------------------
 
-  this.vertices = plyData.points;
-  this.normals = plyData.normals;
+  this.vertices = asteroidModel.vertices;
+  this.normals = asteroidModel.normals;
 
   this.vSize = this.vertices.length;
 
   // World coordinates transformation -------------
 
-  if (firstborn) {
-    this.location = createRandomCoords();
-    this.direction = normalize(createRandomCoords());
-  } else {
-    // verður stillt við collision.
-    this.location = vec3();
-    this.direction = vec3();
-  }
+  this.location = location;
+  this.direction = direction;
 
-  if (size == 12) this.speed = 0.1 + Math.random() * 0.4;
-  else if (size == 6) this.speed = 0.3 + Math.random() * 0.5;
-  else this.speed = 0.5 + Math.random() * 0.6;
+  if (size == 12) speed = 0.1 + Math.random() * 0.4;
+  else if (size == 6) speed = 0.3 + Math.random() * 0.5;
+  else if (size == 3) speed = 0.5 + Math.random() * 0.6;
 
-  this.setVelocity = function() {
-    this.velocity = scale(this.speed, this.direction);
-  }
-
-  this.setVelocity();
+  this.velocity = scale(speed, this.direction);
 
   // Snúningur
   this.rotAxis = normalize(vec3(Math.random(), Math.random(), Math.random()));
@@ -541,13 +560,6 @@ function Asteroid(size, firstborn = true) {
   this.vertexBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, flatten(this.vertices), gl.STATIC_DRAW);
-
-  // Children ------------------------------------
-
-  if (this.size > 3) {
-    this.child1 = new Asteroid(this.size / 2, false);
-    this.child2 = new Asteroid(this.size / 2, false);
-  }
 
 }
 
@@ -741,7 +753,8 @@ function drawAsteroid(asteroid) {
   if (isCollision(asteroid, thePlayer)) {
     console.log("you ded");
 
-    //asteroid.velocity = add(asteroid.velocity, scale(speed, vec3(xDir, yDir, zDir)));
+    // Killed by lasers, no need to continue drawing.
+    if (!asteroid) return;
   }
 
   asteroid.theta += asteroid.rotateSpeed % 360;
