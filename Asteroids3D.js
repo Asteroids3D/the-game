@@ -64,12 +64,9 @@ window.onload = function init() {
 
   PR = PlyReader();
 
-  rotates = false;
   xSpin = ySpin = oldX = oldY = 0.0; // Ekki í notkun eins og er.
 
 	playBoxVertexRadius = 300;
-  pitch = yaw = 0.0;
-  rotateSpeed = 1.5;
   aspect = gl.clientWidth / gl.clientHeight;
   numberOfRoids = 36; // multiple of 3
   roids = [];
@@ -200,11 +197,11 @@ window.onload = function init() {
 // Utility functions ---------------------------------
 
 function manageKeyInput(player) {
-
-    if (key.isDown(key.LEFT)) pitch -= player.lookSpeed % 360;
-    if (key.isDown(key.RIGHT)) pitch += player.lookSpeed % 360;
-    if (key.isDown(key.UP) && yaw < 88) yaw += player.lookSpeed;
-    if (key.isDown(key.DOWN) && yaw > -88) yaw -= player.lookSpeed;
+    // svissaði óvart pitch og yaw í byrjun, nenni ekki að laga.
+    if (key.isDown(key.LEFT)) player.yaw -= player.lookSpeed % 360;
+    if (key.isDown(key.RIGHT)) player.yaw += player.lookSpeed % 360;
+    if (key.isDown(key.UP) && player.pitch < 88) player.pitch += player.lookSpeed;
+    if (key.isDown(key.DOWN) && player.pitch > -88) player.pitch -= player.lookSpeed;
     if (key.isDown(key.ACCELERATE)) {
       // Space movement.. má alveg setja e-h hámark á velocity.
       player.velocity = add(player.velocity,
@@ -232,6 +229,14 @@ function setPerspective() {
 
     gl.viewport( 0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight );
   }
+}
+
+function getSphericalDirection(pitch, yaw) {
+  return [
+    Math.cos(radians(yaw)) * Math.cos(radians(pitch)),
+    Math.sin(radians(pitch)),
+    Math.sin(radians(yaw)) * Math.cos(radians(pitch))
+  ];
 }
 
 function createRandomCoords() {
@@ -340,6 +345,7 @@ function isCollision(asteroid, player) {
     if (lasers.isActive) {
       if (checkCollisionWithObject(lasers.laser1Location)
           || checkCollisionWithObject(lasers.laser2Location)) {
+        lasers.isActive = false;
         console.log("Asteroid should splinter or die");
       }
     }
@@ -361,6 +367,9 @@ function Player() {
   this.velocity = vec3();
   this.weight = 80;
   this.lookSpeed = 1.5;
+
+  this.yaw = 0.0;
+  this.pitch = 0.0;
 
   this.getSpeed = function() {
     // calculate velocity vector length.
@@ -392,9 +401,12 @@ function Player() {
         var degrees = -rads * 180 / Math.PI;
         var axis = cross(this.direction, lasers.initDirection);
 
+        var topNormal = getSphericalDirection(this.pitch + 90, this.yaw);
 
-        lasers.laser1Location = add(this.location, scale(5, axis));
-        lasers.laser2Location = subtract(this.location, scale(5, axis));
+        var sideNormal = cross(topNormal, this.direction);
+
+        lasers.laser1Location = add(this.location, scale(3, sideNormal));
+        lasers.laser2Location = add(this.location, scale(3, negate(sideNormal)));
         lasers.transformationMatrix = mult(rotate(degrees, axis), lasers.scaleMatrix);
 
         return;
@@ -877,9 +889,7 @@ function drawLasers(lasers) {
 }
 
 function playerMovement(player) {
-  player.direction[0] = Math.cos(radians(pitch)) * Math.cos(radians(yaw));
-  player.direction[1] = Math.sin(radians(yaw));
-  player.direction[2] = Math.sin(radians(pitch)) * Math.cos(radians(yaw));
+  player.direction = getSphericalDirection(player.pitch, player.yaw);
 
 	var newLocation = add(player.location, player.velocity);
 	// Wrap player if applicable
