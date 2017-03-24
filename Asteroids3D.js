@@ -394,7 +394,7 @@ function Player() {
         lasers.isActive = true;
         //lasers.location = this.location;
 
-        // laser rotation
+        // laser starting placement relative to player camera.
         var rads = Math.atan2(Math.sqrt(dot(cross(this.direction, lasers.initDirection),
                                             cross(this.direction, lasers.initDirection))),
                               dot(this.direction, lasers.initDirection));
@@ -409,7 +409,7 @@ function Player() {
         lasers.laser1Location = add(lasers.laser1Location, scale(-4, topNormal));
         lasers.laser2Location = add(this.location, scale(5, negate(sideNormal)));
         lasers.laser2Location = add(lasers.laser2Location, scale(-4, topNormal));
-        lasers.transformationMatrix = mult(rotate(degrees, axis), lasers.scaleMatrix);
+        lasers.transformationMatrix = mult(rotate(degrees, axis), lasers.baseMatrix);
 
         return;
       }
@@ -420,10 +420,18 @@ function Player() {
 
 function LaserBeams() {
 
-  // Object data --------------------------------------
+  var plyData = PR.read("models/beam1.ply");
 
-  this.arrays = getCubeArrays([1.0, 1.0, 1.0]);
-  this.color = vec4(1.0, 0.0, 0.0, 1.0);
+  // Object data ---------------------------------
+
+  this.vertices = plyData.points;
+  this.normals = plyData.normals;
+  //7this.index = plyData.polys;
+
+  this.vSize = this.vertices.length;
+  //this.iSize = this.index.length;
+
+  this.color = vec4(0.0, 1.0, 0.0, 1.0);
   this.isActive = false;
 
   // World coordinates transformation -----------------
@@ -432,26 +440,26 @@ function LaserBeams() {
   this.laser1Location = vec3();
   this.laser2Location = vec3();
   this.direction = vec3();
-  this.speed = 4.0;
+  this.speed = 8.0;
   this.velocity = vec3();
   this.transformationMatrix = mat4();
-  this.scaleMatrix = scalem(2.0, 2.0, 20.0);
+  this.baseMatrix = mult(rotateX(90), scalem(4.0, 10.0, 4.0));
   this.initDirection = vec3(0.0, 0.0, 1.0);
 
   // Buffers ------------------------------------------
 
   this.nBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, this.nBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, flatten(this.arrays.normals), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(this.normals), gl.STATIC_DRAW);
 
   this.vBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, flatten(this.arrays.vertices), gl.STATIC_DRAW);
-
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(this.vertices), gl.STATIC_DRAW);
+  /*
   this.iBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.iBuffer);
-  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint8Array(this.arrays.index), gl.STATIC_DRAW);
-
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint8Array(this.index), gl.STATIC_DRAW);
+  */
 }
 
 
@@ -863,12 +871,12 @@ function drawLasers(lasers) {
     gl.uniform4fv(locColor, lasers.color);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, lasers.vBuffer);
-    gl.vertexAttribPointer(locPosition, 3, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(locPosition, 4, gl.FLOAT, false, 0, 0);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, lasers.nBuffer);
-    gl.vertexAttribPointer(locNormal, 3, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(locNormal, 4, gl.FLOAT, false, 0, 0);
 
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, lasers.iBuffer);
+    //gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, lasers.iBuffer);
 
     lasers.laser1Location = add(lasers.laser1Location, lasers.velocity);
     lasers.laser2Location = add(lasers.laser2Location, lasers.velocity);
@@ -880,10 +888,11 @@ function drawLasers(lasers) {
 
     gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmLaser1));
 
-    gl.drawElements(gl.TRIANGLES, lasers.arrays.iSize, gl.UNSIGNED_BYTE, 0);
-
+    //gl.drawElements(gl.TRIANGLES, lasers.iSize, gl.UNSIGNED_BYTE, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, lasers.vSize);
     gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmLaser2));
-    gl.drawElements(gl.TRIANGLES, lasers.arrays.iSize, gl.UNSIGNED_BYTE, 0);
+    //gl.drawElements(gl.TRIANGLES, lasers.iSize, gl.UNSIGNED_BYTE, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, lasers.vSize);
 
     gl.uniform1f(locVcoloringMode, 0.0);
     gl.uniform1f(locFcoloringMode, 0.0);
