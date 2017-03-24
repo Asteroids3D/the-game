@@ -405,8 +405,10 @@ function Player() {
 
         var sideNormal = cross(topNormal, this.direction);
 
-        lasers.laser1Location = add(this.location, scale(3, sideNormal));
-        lasers.laser2Location = add(this.location, scale(3, negate(sideNormal)));
+        lasers.laser1Location = add(this.location, scale(5, sideNormal));
+        lasers.laser1Location = add(lasers.laser1Location, scale(-4, topNormal));
+        lasers.laser2Location = add(this.location, scale(5, negate(sideNormal)));
+        lasers.laser2Location = add(lasers.laser2Location, scale(-4, topNormal));
         lasers.transformationMatrix = mult(rotate(degrees, axis), lasers.scaleMatrix);
 
         return;
