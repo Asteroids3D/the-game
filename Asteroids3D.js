@@ -47,6 +47,7 @@ var playBoxVertexRadius;
 var asteroidModel;
 var laserBeamModel;
 
+var SFX;
 
 window.onload = function init() {
 
@@ -71,6 +72,10 @@ window.onload = function init() {
 
   asteroidModel = new AsteroidModel();
   laserBeamModel = new LaserBeamModel();
+
+  SFX = {
+    "laser": new Audio("sfx/laser.mp3")
+  };
 
   xSpin = ySpin = oldX = oldY = 0.0; // Ekki í notkun eins og er.
 
@@ -491,6 +496,13 @@ function Player() {
         lasers.direction = this.direction;
         lasers.velocity = add(this.velocity, scale(lasers.speed, this.direction));
         lasers.isActive = true;
+        if (!SFX.laser.currentTime == 0) {
+          SFX.laser.currentTime = 0;
+          SFX.laser.play();
+        } else {
+          SFX.laser.play();
+        }
+
         //lasers.location = this.location;
 
         // laser starting placement relative to player camera.
