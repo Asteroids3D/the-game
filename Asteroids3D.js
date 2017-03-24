@@ -346,7 +346,30 @@ function isCollision(asteroid, player) {
       if (checkCollisionWithObject(lasers.laser1Location)
           || checkCollisionWithObject(lasers.laser2Location)) {
         lasers.isActive = false;
-        console.log("Asteroid should splinter or die");
+
+        // Create new asteroids
+        if (asteroid.size > 3) {
+          asteroid.child1.location = asteroid.location;
+          asteroid.child1.direction = lasers.sideNormal;
+          asteroid.child1.setVelocity();
+
+          asteroid.child2.location = asteroid.location;
+          asteroid.child2.direction = negate(lasers.sideNormal);
+          asteroid.child2.setVelocity();
+
+          roids.push(asteroid.child1);
+          roids.push(asteroid.child2);
+        }
+
+        // Cleanup dead asteroid
+        gl.deleteBuffer(asteroid.normalsBuffer);
+        gl.deleteBuffer(asteroid.vertexBuffer);
+        var index  = roids.indexOf(asteroid);
+        roids.splice(index, 1);
+        asteroid = null;
+
+        // give player points & show on screen.
+        player.points += 1;
       }
     }
   }
@@ -367,6 +390,7 @@ function Player() {
   this.velocity = vec3();
   this.weight = 80;
   this.lookSpeed = 1.5;
+  this.points = 0;
 
   this.yaw = 0.0;
   this.pitch = 0.0;
@@ -390,6 +414,7 @@ function Player() {
     for (var i = 0; i < this.numberOfLasers; i++) {
       if (!this.Lasers[i].isActive) {
         var lasers = this.Lasers[i];
+        lasers.direction = this.direction;
         lasers.velocity = add(this.velocity, scale(lasers.speed, this.direction));
         lasers.isActive = true;
         //lasers.location = this.location;
@@ -403,11 +428,10 @@ function Player() {
 
         var topNormal = getSphericalDirection(this.pitch + 90, this.yaw);
 
-        var sideNormal = cross(topNormal, this.direction);
-
-        lasers.laser1Location = add(this.location, scale(5, sideNormal));
+        lasers.sideNormal = cross(topNormal, this.direction);
+        lasers.laser1Location = add(this.location, scale(5, lasers.sideNormal));
         lasers.laser1Location = add(lasers.laser1Location, scale(-4, topNormal));
-        lasers.laser2Location = add(this.location, scale(5, negate(sideNormal)));
+        lasers.laser2Location = add(this.location, scale(5, negate(lasers.sideNormal)));
         lasers.laser2Location = add(lasers.laser2Location, scale(-4, topNormal));
         lasers.transformationMatrix = mult(rotate(degrees, axis), lasers.baseMatrix);
 
@@ -426,17 +450,14 @@ function LaserBeams() {
 
   this.vertices = plyData.points;
   this.normals = plyData.normals;
-  //7this.index = plyData.polys;
 
   this.vSize = this.vertices.length;
-  //this.iSize = this.index.length;
 
-  this.color = vec4(0.0, 1.0, 0.0, 1.0);
+  this.color = vec4(0.8, 0.2, 1.0, 1.0);
   this.isActive = false;
 
   // World coordinates transformation -----------------
 
-  //this.location = vec3();
   this.laser1Location = vec3();
   this.laser2Location = vec3();
   this.direction = vec3();
@@ -445,6 +466,7 @@ function LaserBeams() {
   this.transformationMatrix = mat4();
   this.baseMatrix = mult(rotateX(90), scalem(4.0, 10.0, 4.0));
   this.initDirection = vec3(0.0, 0.0, 1.0);
+  this.sideNormal = vec3();
 
   // Buffers ------------------------------------------
 
@@ -455,15 +477,10 @@ function LaserBeams() {
   this.vBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, flatten(this.vertices), gl.STATIC_DRAW);
-  /*
-  this.iBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.iBuffer);
-  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint8Array(this.index), gl.STATIC_DRAW);
-  */
+
 }
 
-
-function Asteroid(size) {
+function Asteroid(size, firstborn = true) {
 
   var plyData = PR.read("models/asteroid.ply");
 
@@ -476,13 +493,24 @@ function Asteroid(size) {
 
   // World coordinates transformation -------------
 
-  // Staða á hverjum tíma
-  this.location = createRandomCoords();
+  if (firstborn) {
+    this.location = createRandomCoords();
+    this.direction = normalize(createRandomCoords());
+  } else {
+    // verður stillt við collision.
+    this.location = vec3();
+    this.direction = vec3();
+  }
 
-  // Stefna og hraði
-  var direction = normalize(createRandomCoords());
-  var speed = 0.1 + Math.random() * 0.4;
-  this.velocity = scale(speed, direction);
+  if (size == 12) this.speed = 0.1 + Math.random() * 0.4;
+  else if (size == 6) this.speed = 0.3 + Math.random() * 0.5;
+  else this.speed = 0.5 + Math.random() * 0.6;
+
+  this.setVelocity = function() {
+    this.velocity = scale(this.speed, this.direction);
+  }
+
+  this.setVelocity();
 
   // Snúningur
   this.rotAxis = normalize(vec3(Math.random(), Math.random(), Math.random()));
@@ -513,6 +541,14 @@ function Asteroid(size) {
   this.vertexBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, flatten(this.vertices), gl.STATIC_DRAW);
+
+  // Children ------------------------------------
+
+  if (this.size > 3) {
+    this.child1 = new Asteroid(this.size / 2, false);
+    this.child2 = new Asteroid(this.size / 2, false);
+  }
+
 }
 
 
