@@ -74,7 +74,8 @@ window.onload = function init() {
   laserBeamModel = new LaserBeamModel();
 
   SFX = {
-    "laser": new Audio("sfx/laser.mp3")
+    "laser": new Audio("sfx/laser.mp3"),
+    "thruster": new Audio("sfx/thruster.mp3")
   };
 
   xSpin = ySpin = oldX = oldY = 0.0; // Ekki í notkun eins og er.
@@ -172,14 +173,6 @@ window.onload = function init() {
     rotates = false;
   });
 
-
-  window.addEventListener("keyup", function(e) {
-    key.onKeyUp(e);
-    if (!key.isDown(key.ACCELERATE)) accelerate = false;
-  });
-
-  window.addEventListener("keydown", function(e) { key.onKeyDown(e); });
-
   key = {
     pressed: {},
 
@@ -209,6 +202,17 @@ window.onload = function init() {
 
   }
 
+  window.addEventListener("keyup", function(e) {
+    key.onKeyUp(e);
+    if (!key.isDown(key.ACCELERATE) && !key.isDown(key.DECELERATE) && !key.isDown(key.REVERSE)) {
+      // TODO fade out (and objectify higher level controls)
+      SFX.thruster.pause();
+      SFX.thruster.currentTime = 0;
+    }
+  });
+
+  window.addEventListener("keydown", function(e) { key.onKeyDown(e); });
+
   render();
 }
 
@@ -222,6 +226,7 @@ function manageKeyInput(player) {
     if ((key.isDown(key.UP) || key.isDown(key.UPARROW)) && player.pitch < 88) player.pitch += player.lookSpeed;
     if ((key.isDown(key.DOWN) || key.isDown(key.DOWNARROW)) && player.pitch > -88) player.pitch -= player.lookSpeed;
     if (key.isDown(key.ACCELERATE)) {
+      SFX.thruster.play();
       // Space movement.. má alveg setja e-h hámark á velocity.
       player.velocity = add(player.velocity,
                             scale(player.acceleration, player.direction));
@@ -231,11 +236,14 @@ function manageKeyInput(player) {
     if (key.isDown(key.DECELERATE)) {
       // Check if we're already at zero. Don't want to normalize zero vectors
       if (!equal(player.velocity, vec3())) {
+        SFX.thruster.play();
         // Set to zero below certain point as we'll never get a precise zero otherwise
         if (Math.abs(player.velocity[0]) <= 0.01 &&
             Math.abs(player.velocity[1]) <= 0.01 &&
             Math.abs(player.velocity[2])) {
           player.velocity = vec3();
+          SFX.thruster.pause();
+          SFX.thruster.currentTime = 0;
         } else {
           player.velocity = subtract(player.velocity,
                                 scale(player.acceleration, nseNormalize(player.velocity)));
@@ -244,6 +252,7 @@ function manageKeyInput(player) {
       displaySpeed.innerText = player.getSpeed().toFixed(2);
     }
     if (key.isDown(key.REVERSE)) {
+      SFX.thruster.play();
       // Space movement.. má alveg setja e-h hámark á velocity.
       player.velocity = subtract(player.velocity,
                             scale(player.acceleration, player.direction));
@@ -502,7 +511,7 @@ function Player() {
         } else {
           SFX.laser.play();
         }
-
+        
         //lasers.location = this.location;
 
         // laser starting placement relative to player camera.
