@@ -179,9 +179,13 @@ window.onload = function init() {
     pressed: {},
 
     LEFT: 65, // W
+    LEFTARROW: 37,
     UP: 87, // A
+    UPARROW: 38,
     RIGHT: 68, // D
+    RIGHTARROW: 39,
     DOWN: 83, // S
+    DOWNARROW: 40,
     FIRE: 32, // SPACE
     ACCELERATE: 16, // SHIFT
     DECELERATE: 90, // Z
@@ -208,10 +212,10 @@ window.onload = function init() {
 
 function manageKeyInput(player) {
     // svissaði óvart pitch og yaw í byrjun, nenni ekki að laga.
-    if (key.isDown(key.LEFT)) player.yaw -= player.lookSpeed % 360;
-    if (key.isDown(key.RIGHT)) player.yaw += player.lookSpeed % 360;
-    if (key.isDown(key.UP) && player.pitch < 88) player.pitch += player.lookSpeed;
-    if (key.isDown(key.DOWN) && player.pitch > -88) player.pitch -= player.lookSpeed;
+    if (key.isDown(key.LEFT) || key.isDown(key.LEFTARROW)) player.yaw -= player.lookSpeed % 360;
+    if (key.isDown(key.RIGHT) || key.isDown(key.RIGHTARROW)) player.yaw += player.lookSpeed % 360;
+    if ((key.isDown(key.UP) || key.isDown(key.UPARROW)) && player.pitch < 88) player.pitch += player.lookSpeed;
+    if ((key.isDown(key.DOWN) || key.isDown(key.DOWNARROW)) && player.pitch > -88) player.pitch -= player.lookSpeed;
     if (key.isDown(key.ACCELERATE)) {
       // Space movement.. má alveg setja e-h hámark á velocity.
       player.velocity = add(player.velocity,
