@@ -617,6 +617,26 @@ function normalize( u, excludeLastComponent )
     return u;
 }
 
+function nseNormalize( u, excludeLastComponent )
+{
+    var result = [];
+    var len = length( u );
+
+    if ( !isFinite(len) ) {
+        throw "normalize: vector " + u + " has zero length";
+    }
+
+    for ( var i = 0; i < u.length; ++i ) {
+        result[i] = u[i] / len;
+    }
+
+    if ( excludeLastComponent ) {
+        result.pop();
+        result.push(u[u.length-1]);
+    }
+    return result;
+}
+
 //----------------------------------------------------------------------------
 
 function mix( u, v, s )

@@ -184,6 +184,8 @@ window.onload = function init() {
     DOWN: 83, // S
     FIRE: 32, // SPACE
     ACCELERATE: 16, // SHIFT
+    DECELERATE: 90, // Z
+    REVERSE: 88, // X
 
     isDown: function(keyCode) {
       return this.pressed[keyCode]
@@ -213,6 +215,28 @@ function manageKeyInput(player) {
     if (key.isDown(key.ACCELERATE)) {
       // Space movement.. má alveg setja e-h hámark á velocity.
       player.velocity = add(player.velocity,
+                            scale(player.acceleration, player.direction));
+
+      displaySpeed.innerText = player.getSpeed().toFixed(2);
+    }
+    if (key.isDown(key.DECELERATE)) {
+      // Check if we're already at zero. Don't want to normalize zero vectors
+      if (!equal(player.velocity, vec3())) {
+        // Set to zero below certain point as we'll never get a precise zero otherwise
+        if (Math.abs(player.velocity[0]) <= 0.01 &&
+            Math.abs(player.velocity[1]) <= 0.01 &&
+            Math.abs(player.velocity[2])) {
+          player.velocity = vec3();
+        } else {
+          player.velocity = subtract(player.velocity,
+                                scale(player.acceleration, nseNormalize(player.velocity)));
+        }
+      }
+      displaySpeed.innerText = player.getSpeed().toFixed(2);
+    }
+    if (key.isDown(key.REVERSE)) {
+      // Space movement.. má alveg setja e-h hámark á velocity.
+      player.velocity = subtract(player.velocity,
                             scale(player.acceleration, player.direction));
 
       displaySpeed.innerText = player.getSpeed().toFixed(2);
