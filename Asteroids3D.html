@@ -105,7 +105,19 @@
     <div class="container">
       <canvas id="gl-canvas"></canvas>
       <div class="dashboard">
-        <p>SPEED <span id="display-speed">0.0</span> m/s</p>
+        <p>SCORE <span id="display-score">0</span></p>
+        <div class="dashboard-container">
+          <img src="images/speed_60w.png" alt="SPEED">
+          <p><span id="display-speed">0.0</span> m/s</p>
+        </div>
+        <div class="dashboard-container" id="shield-points-container">
+          <img src="images/shield_60w.png" alt="SHIELD ">
+          <div class="shield-points" id="shield-1"></div>
+          <div class="shield-points" id="shield-2"></div>
+          <div class="shield-points" id="shield-3"></div>
+          <div class="shield-points" id="shield-4"></div>
+          <div class="shield-points" id="shield-5"></div>
+        </div>
       </div>
     </div>
     <div class="texture-container">

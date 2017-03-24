@@ -38,6 +38,7 @@ var theSpaceCube;
 var collision;
 var thePlayer;
 var displaySpeed;
+var displayScore;
 
 var fired;
 
@@ -46,7 +47,6 @@ var playBoxVertexRadius;
 var asteroidModel;
 var laserBeamModel;
 
-var debugCounter = 0;
 
 window.onload = function init() {
 
@@ -107,7 +107,7 @@ window.onload = function init() {
   // HTML elements ------------------------------------
 
   displaySpeed = document.getElementById("display-speed");
-
+  displayScore = document.getElementById("display-score");
 
   // GLSL variables -----------------------------------
 
@@ -345,8 +345,20 @@ function isCollision(asteroid, player) {
   var roidZ = asteroid.location[2];
   var size = asteroid.size;
 
-  if (checkCollisionWithObject(player.location)) {
-    console.log("Player should die");
+  if (!player.isImmune && checkCollisionWithObject(player.location)) {
+    var shieldPoint = document.getElementById("shield-" + player.shield);
+    shieldPoint.style.visibility = "hidden";
+
+    player.shield -= 1;
+    // red flashing screen.
+
+    if (player.shield < 1) {
+      console.log("Player should die");
+    } else {
+      // gefum 2 sek í recovery eftir roid bump.
+      player.isImmune = true;
+      setTimeout(function() { player.isImmune = false; }, 2000);
+    }
   }
 
   for (var i = 0; i < player.Lasers.length; i++) {
@@ -366,16 +378,20 @@ function isCollision(asteroid, player) {
                                     negate(lasers.sideNormal)));
         }
 
+
+
+        // give player points & show on screen.
+        if (asteroid.size == 12) player.points += 1;
+        else if (asteroid.size == 6) player.points += 2;
+        else player.points += 5;
+        displayScore.innerText = player.points;
+
         // Cleanup dead asteroid
         gl.deleteBuffer(asteroid.normalsBuffer);
         gl.deleteBuffer(asteroid.vertexBuffer);
-        debugger;
         var index  = roids.indexOf(asteroid);
         roids.splice(index, 1);
         asteroid = null;
-
-        // give player points & show on screen.
-        player.points += 1;
 
         return true;
       }
@@ -419,6 +435,8 @@ function Player() {
   this.weight = 80;
   this.lookSpeed = 1.5;
   this.points = 0;
+  this.shield = 5;
+  this.isImmune = false;
 
   this.yaw = 0.0;
   this.pitch = 0.0;
@@ -479,7 +497,7 @@ function LaserBeams() {
 
   this.vSize = this.vertices.length;
 
-  this.color = vec4(0.8, 0.2, 1.0, 1.0);
+  this.color = vec4(0.0, 1.0, 1.0, 1.0);
   this.isActive = false;
 
   // World coordinates transformation -----------------
@@ -509,9 +527,6 @@ function LaserBeams() {
 function Asteroid(size,
                   location = createRandomCoords(),
                   direction = normalize(createRandomCoords())) {
-
-  this.counter = debugCounter;
-  debugCounter++;
 
   // Object data ---------------------------------
 
@@ -754,7 +769,7 @@ function drawAsteroid(asteroid) {
     console.log("you ded");
 
     // Killed by lasers, no need to continue drawing.
-    if (!asteroid) return;
+    if (roids.indexOf(asteroid) == -1) return;
   }
 
   asteroid.theta += asteroid.rotateSpeed % 360;

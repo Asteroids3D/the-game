@@ -12,16 +12,6 @@ html, body {
   align-items: center;
 }
 
-.to-be-hidden {
-  /*display: none;*/
-  width:200px;
-  margin-left: 20px;
-  position: absolute;
-  top: 10px;
-  right:20px;
-  color: white;
-}
-
 .texture-container > * {
   display: none;
 }
@@ -32,11 +22,30 @@ canvas {
 }
 
 .dashboard {
-  width:250px;
+  width:280px;
   position: absolute;
   top: 10px;
   right:50px;
-  color: white;
+  color: cyan;
   font-family: Consolas;
   font-size:1.8em;
+}
+
+.dashboard-container {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.shield-points {
+  width: 8px;
+  height:60px;
+  background-color: cyan;
+  margin-left: 15px;
+}
+
+#shield-1, #display-speed { margin-left: 30px; }
+
+#display-score {
+  margin-bottom: 20px;
 }
