@@ -377,8 +377,14 @@ function SFXManager() {
     "alien": {
       "audio": new Audio("sfx/thruster.mp3"),
       "interruptable": false},
-    "explosion": {
-      "audio": new Audio("sfx/explosion.mp3"),
+    "explosion_big": {
+      "audio": new Audio("sfx/explosion_big.mp3"),
+      "interruptable": true},
+    "explosion_medium": {
+      "audio": new Audio("sfx/explosion_medium.mp3"),
+      "interruptable": true},
+    "explosion_small": {
+      "audio": new Audio("sfx/explosion_small.mp3"),
       "interruptable": true},
     "collision": {
       "audio": new Audio("sfx/collision.mp3"),
@@ -410,6 +416,16 @@ function isCollision(asteroid, player) {
       // Object collision!
       return true;
     }
+  }
+
+  function createSmallerAsteroids(asteroid, lasers) {
+  // Create new asteroids
+  roids.push(new Asteroid(asteroid.size / 2,
+                            asteroid.location,
+                            lasers.sideNormal));
+  roids.push(new Asteroid(asteroid.size / 2,
+                            asteroid.location,
+                            negate(lasers.sideNormal)));
   }
 
   var roidX = asteroid.location[0];
@@ -446,17 +462,17 @@ function isCollision(asteroid, player) {
           || checkCollisionWithObject(lasers.laser2Location)) {
         lasers.isActive = false;
 
-        // Create new asteroids
-        if (asteroid.size > 3) {
-          roids.push(new Asteroid(asteroid.size / 2,
-                                    asteroid.location,
-                                    lasers.sideNormal));
-          roids.push(new Asteroid(asteroid.size / 2,
-                                    asteroid.location,
-                                    negate(lasers.sideNormal)));
+        // Deal with asteroids being hit
+        if (asteroid.size > 6) {
+          SFX.play("explosion_big");
+          createSmallerAsteroids(asteroid, lasers);
+        } else if (asteroid.size > 3) {
+          SFX.play("explosion_medium");
+          createSmallerAsteroids(asteroid, lasers);
         }
+        else
+          SFX.play("explosion_small");
 
-        SFX.play("explosion");
 
         // give player points & show on screen.
         if (asteroid.size == 12) player.points += 1;
