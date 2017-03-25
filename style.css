@@ -24,17 +24,21 @@ canvas {
 .dashboard {
   width:280px;
   position: absolute;
-  top: 10px;
-  right:50px;
+  bottom: 10px;
+  width: 100vw;
+  left: 0;
   color: cyan;
   font-family: Consolas;
-  font-size:1.8em;
+  font-size:2.5em;
+  display: flex;
+  justify-content: space-between;
 }
 
 .dashboard-container {
   display: flex;
   justify-content: flex-start;
-  align-items: center;
+  align-items: flex-end;
+  margin: 0 5% 1% 5%;
 }
 
 .shield-points {
@@ -44,8 +48,19 @@ canvas {
   margin-left: 15px;
 }
 
-#shield-1, #display-speed { margin-left: 30px; }
+#shield-1, #display-speed, #display-score { margin-left: 30px; }
 
 #display-score {
   margin-bottom: 20px;
+}
+
+p { margin: 0; }
+
+.crosshairs {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

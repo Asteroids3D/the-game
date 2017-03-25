@@ -511,7 +511,7 @@ function Player() {
         } else {
           SFX.laser.play();
         }
-        
+
         //lasers.location = this.location;
 
         // laser starting placement relative to player camera.
@@ -557,7 +557,7 @@ function LaserBeams() {
   this.speed = 8.0;
   this.velocity = vec3();
   this.transformationMatrix = mat4();
-  this.baseMatrix = mult(rotateX(90), scalem(4.0, 10.0, 4.0));
+  this.baseMatrix = mult(rotateX(90), scalem(3.0, 10.0, 3.0));
   this.initDirection = vec3(0.0, 0.0, 1.0);
   this.sideNormal = vec3();
 

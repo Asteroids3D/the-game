@@ -105,10 +105,16 @@
   <body id="body">
     <div class="container">
       <canvas id="gl-canvas"></canvas>
+      <div class="crosshairs">
+        <img src="images/x2.png" alt="">
+      </div>
       <div class="dashboard">
-        <p>SCORE <span id="display-score">0</span></p>
         <div class="dashboard-container">
-          <img src="images/speed_60w.png" alt="SPEED">
+          <img src="images/kills_70w.png" alt="SCORE">
+          <p><span id="display-score">0</span></p>
+        </div>
+        <div class="dashboard-container">
+          <img src="images/speed_70w.png" alt="SPEED">
           <p><span id="display-speed">0.0</span> m/s</p>
         </div>
         <div class="dashboard-container" id="shield-points-container">
