@@ -400,6 +400,11 @@ function isCollision(asteroid, player) {
       // gefum 2 sek í recovery eftir roid bump.
       player.isImmune = true;
       setTimeout(function() { player.isImmune = false; }, 2000);
+      /*
+      var weightProportion = player.weight / (player.weight + asteroid.weight);
+      player.velocity = scale();
+      asteroid.velocity = scale();
+      */
     }
   }
 
