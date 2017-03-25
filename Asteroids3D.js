@@ -73,10 +73,7 @@ window.onload = function init() {
   asteroidModel = new AsteroidModel();
   laserBeamModel = new LaserBeamModel();
 
-  SFX = {
-    "laser": new Audio("sfx/laser.mp3"),
-    "thruster": new Audio("sfx/thruster.mp3")
-  };
+  SFX = new SFXManager();
 
   xSpin = ySpin = oldX = oldY = 0.0; // Ekki í notkun eins og er.
 
@@ -205,9 +202,7 @@ window.onload = function init() {
   window.addEventListener("keyup", function(e) {
     key.onKeyUp(e);
     if (!key.isDown(key.ACCELERATE) && !key.isDown(key.DECELERATE) && !key.isDown(key.REVERSE)) {
-      // TODO fade out (and objectify higher level controls)
-      SFX.thruster.pause();
-      SFX.thruster.currentTime = 0;
+      SFX.stop("thruster");
     }
   });
 
@@ -226,7 +221,7 @@ function manageKeyInput(player) {
     if ((key.isDown(key.UP) || key.isDown(key.UPARROW)) && player.pitch < 88) player.pitch += player.lookSpeed;
     if ((key.isDown(key.DOWN) || key.isDown(key.DOWNARROW)) && player.pitch > -88) player.pitch -= player.lookSpeed;
     if (key.isDown(key.ACCELERATE)) {
-      SFX.thruster.play();
+      SFX.play("thruster");
       // Space movement.. má alveg setja e-h hámark á velocity.
       player.velocity = add(player.velocity,
                             scale(player.acceleration, player.direction));
@@ -236,14 +231,13 @@ function manageKeyInput(player) {
     if (key.isDown(key.DECELERATE)) {
       // Check if we're already at zero. Don't want to normalize zero vectors
       if (!equal(player.velocity, vec3())) {
-        SFX.thruster.play();
+        SFX.play("thruster");
         // Set to zero below certain point as we'll never get a precise zero otherwise
         if (Math.abs(player.velocity[0]) <= 0.01 &&
             Math.abs(player.velocity[1]) <= 0.01 &&
             Math.abs(player.velocity[2])) {
           player.velocity = vec3();
-          SFX.thruster.pause();
-          SFX.thruster.currentTime = 0;
+          SFX.stop("thruster");
         } else {
           player.velocity = subtract(player.velocity,
                                 scale(player.acceleration, nseNormalize(player.velocity)));
@@ -252,7 +246,7 @@ function manageKeyInput(player) {
       displaySpeed.innerText = player.getSpeed().toFixed(2);
     }
     if (key.isDown(key.REVERSE)) {
-      SFX.thruster.play();
+      SFX.play("thruster");
       // Space movement.. má alveg setja e-h hámark á velocity.
       player.velocity = subtract(player.velocity,
                             scale(player.acceleration, player.direction));
@@ -370,7 +364,45 @@ function getCubeArrays(size) {
   };
 }
 
+function SFXManager() {
+  this.soundsEnabled = true;
+  this.musicEnabled = true;
 
+  this.SFX = {
+    "laser": {
+      "audio": new Audio("sfx/laser.mp3"),
+      "interruptable": true},
+    "thruster": {
+      "audio": new Audio("sfx/thruster.mp3"),
+      "interruptable": false},
+    "alien": {
+      "audio": new Audio("sfx/thruster.mp3"),
+      "interruptable": false},
+    "laserhit": {
+      "audio": new Audio("sfx/laser.mp3"),
+      "interruptable": true},
+    "collision": {
+      "audio": new Audio("sfx/laser.mp3"),
+      "interruptable": true}
+  };
+
+  this.play = function(sound) {
+    if (!this.soundsEnabled)
+      return;
+    if (this.SFX[sound].interruptable == true ||
+        this.SFX[sound].audio.currentTime == 0) {
+      // Call stop in case the sound is already playing (if applicable)
+      console.log("Playing");
+      this.stop(sound);
+      this.SFX[sound].audio.play();
+    }
+  };
+
+  this.stop = function(sound) {
+    this.SFX[sound].audio.pause();
+    this.SFX[sound].audio.currentTime = 0;
+  };
+}
 
 function isCollision(asteroid, player) {
   function checkCollisionWithObject(objLocation) {
@@ -510,12 +542,7 @@ function Player() {
         lasers.direction = this.direction;
         lasers.velocity = add(this.velocity, scale(lasers.speed, this.direction));
         lasers.isActive = true;
-        if (!SFX.laser.currentTime == 0) {
-          SFX.laser.currentTime = 0;
-          SFX.laser.play();
-        } else {
-          SFX.laser.play();
-        }
+        SFX.play("laser");
 
         //lasers.location = this.location;
 
