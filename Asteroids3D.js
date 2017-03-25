@@ -368,8 +368,20 @@ function SFXManager() {
   this.musicEnabled = true;
 
   this.SFX = {
-    "laser": {
-      "audio": new Audio("sfx/laser.mp3"),
+    "laser1": {
+      "audio": new Audio("sfx/laser1.mp3"),
+      "interruptable": true},
+    "laser2": {
+      "audio": new Audio("sfx/laser2.mp3"),
+      "interruptable": true},
+    "laser3": {
+      "audio": new Audio("sfx/laser3.mp3"),
+      "interruptable": true},
+    "laser4": {
+      "audio": new Audio("sfx/laser4.mp3"),
+      "interruptable": true},
+    "laser5": {
+      "audio": new Audio("sfx/laser5.mp3"),
       "interruptable": true},
     "thruster": {
       "audio": new Audio("sfx/thruster.mp3"),
@@ -394,6 +406,9 @@ function SFXManager() {
   this.play = function(sound) {
     if (!this.soundsEnabled)
       return;
+    if (sound == "laser")
+      sound = "laser" + parseInt(Math.random() * (6 - 1) + 1);
+
     if (this.SFX[sound].interruptable == true ||
         this.SFX[sound].audio.currentTime == 0) {
       // Call stop in case the sound is already playing (if applicable)
