@@ -387,7 +387,7 @@ function SFXManager() {
       "audio": new Audio("sfx/thruster.mp3"),
       "interruptable": false},
     "alien": {
-      "audio": new Audio("sfx/thruster.mp3"),
+      "audio": new Audio("sfx/alien.mp3"),
       "interruptable": false},
     "explosion_big": {
       "audio": new Audio("sfx/explosion_big.mp3"),
