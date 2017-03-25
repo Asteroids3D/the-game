@@ -378,8 +378,8 @@ function SFXManager() {
     "alien": {
       "audio": new Audio("sfx/thruster.mp3"),
       "interruptable": false},
-    "laserhit": {
-      "audio": new Audio("sfx/laser.mp3"),
+    "explosion": {
+      "audio": new Audio("sfx/explosion.mp3"),
       "interruptable": true},
     "collision": {
       "audio": new Audio("sfx/laser.mp3"),
@@ -456,7 +456,7 @@ function isCollision(asteroid, player) {
                                     negate(lasers.sideNormal)));
         }
 
-
+        SFX.play("explosion");
 
         // give player points & show on screen.
         if (asteroid.size == 12) player.points += 1;
