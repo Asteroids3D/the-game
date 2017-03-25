@@ -46,7 +46,9 @@ var playBoxVertexRadius;
 
 var asteroidModel;
 var laserBeamModel;
+var alienModel;
 
+var theAlien;
 var SFX;
 
 window.onload = function init() {
@@ -72,6 +74,8 @@ window.onload = function init() {
 
   asteroidModel = new AsteroidModel();
   laserBeamModel = new LaserBeamModel();
+  //alienModel = new AlienModel();
+
 
   SFX = {
     "laser": new Audio("sfx/laser.mp3"),
@@ -88,6 +92,11 @@ window.onload = function init() {
 
   thePlayer = new Player();
 
+  /*
+  setInterval(function() {
+    theAlien = new Alien(thePlayer);
+  }, 120000);
+  */
   for (var i = 0; i < numberOfRoids / 3; i++) {
     roids.push(new Asteroid(12));
   }
@@ -98,6 +107,7 @@ window.onload = function init() {
     roids.push(new Asteroid(3));
   }
 
+  theAlien = new Alien();
   theSkybox = new Skybox();
   theSpaceCube = new SpaceCube();
 
@@ -466,6 +476,15 @@ function LaserBeamModel() {
 
 }
 
+function AlienModel() {
+
+  var plyData = PR.read("models/saucer.ply");
+
+  this.vertices = plyData.points;
+  this.normals = plyData.normals;
+
+}
+
 
 // Object constructors ----------------------------------
 
@@ -567,6 +586,84 @@ function LaserBeams() {
   this.sideNormal = vec3();
 
   // Buffers ------------------------------------------
+
+  this.nBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, this.nBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(this.normals), gl.STATIC_DRAW);
+
+  this.vBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(this.vertices), gl.STATIC_DRAW);
+
+}
+
+function Alien() {
+
+
+  this.vertices = [
+    vec3(0.5, 0.5, 0.0),
+    vec3(-0.5, 0.5, 0.0),
+    vec3(-0.5, -0.5, 0.0),
+    vec3(-0.5, -0.5, 0.0),
+    vec3(0.5, -0.5, 0.0),
+    vec3(0.5, 0.5, 0.0)
+  ];
+
+  this.normals = [
+    vec3(0.0, 0.0, 1.0),
+    vec3(0.0, 0.0, 1.0),
+    vec3(0.0, 0.0, 1.0),
+    vec3(0.0, 0.0, 1.0),
+    vec3(0.0, 0.0, 1.0),
+    vec3(0.0, 0.0, 1.0),
+  ];
+
+
+  /*
+  this.vertices = asteroidModel.vertices;
+  this.normals = asteroidModel.normals;
+  */
+
+
+  /*
+  this.vertices = alienModel.vertices;
+  this.normals = alienModel.normals;
+  */
+
+  this.vSize = this.vertices.length;
+  this.isActive = true;
+  this.shield = 3;
+  this.speed = 3;
+  this.size = 5;
+  this.scaleMatrix = scalem(150.0, 150.0, 150.0);
+
+  this.location = createRandomCoords();
+  // Birtist hjá öðrum hvorum x = 300 veggnum.
+  //this.location[0] = Math.random() > 0.5 ? -300 : 300;
+  /*
+  this.direction = vec3();
+  this.velocity = vec3();
+
+  this.moveMe = function() {
+    this.direction = normalize(createRandomCoords());
+    this.velocity = scale(this.speed, this.direction());
+   }
+  this.stopMe = function() { this.velocity = vec3(); }
+  */
+  /*
+  setTimeout(function() {
+    // check if player killed alien.
+    if (!this.isActive) return;
+
+    this.isActive = false;
+  }, 30000);
+  */
+  this.ambient = vec4(0.3, 0.1, 0.1, 1.0);
+  this.diffuse = vec4(1.0, 0.7, 0.7, 1.0);
+  this.specular = vec4(1.0, 1.0, 1.0, 1.0);
+  this.shininess = 120.0;
+
+  // Buffers -------------------------------------
 
   this.nBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, this.nBuffer);
@@ -1017,6 +1114,28 @@ function drawLasers(lasers) {
   }
 }
 
+function drawAlien(alien) {
+  debugger;
+  //alien.location = add(alien.location, alien.velocity);
+
+  ctmAlien = mult(ctm, translate(alien.location));
+  ctmAlien = mult(ctmAlien, alien.scaleMatrix);
+  gl.uniformMatrix4fv(locMvMatrix, false, flatten(ctmAlien));
+
+  gl.uniform4fv(locAmbient, mult(lightAmbient, alien.ambient));
+  gl.uniform4fv(locDiffuse, mult(lightDiffuse, alien.diffuse));
+  gl.uniform4fv(locSpecular, mult(lightSpecular, alien.specular));
+  gl.uniform1f(locShininess, alien.shininess);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, alien.nBuffer);
+  gl.vertexAttribPointer(locNormal, 4, gl.FLOAT, false, 0, 0);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, alien.vBuffer);
+  gl.vertexAttribPointer(locPosition, 4, gl.FLOAT, false, 0, 0);
+
+  gl.drawArrays(gl.TRIANGLES, 0, flatten(alien.vSize));
+}
+
 function playerMovement(player) {
   player.direction = getSphericalDirection(player.pitch, player.yaw);
 
@@ -1056,12 +1175,14 @@ function render() {
 
   drawSkybox(theSkybox);
   drawSun(theSun);
+  /* if (theAlien.isActive)  */ drawAlien(theAlien);
 
   for (var i = 0; i < roids.length; i++) {
     drawAsteroid(roids[i]);
   }
 
   drawSpaceCube(theSpaceCube);
+
 
 	for (var i = 0; i < thePlayer.numberOfLasers; i++) {
     if (thePlayer.Lasers[i].isActive)
