@@ -35,7 +35,6 @@ var locColor;
 var locTexCoords;
 
 var theSpaceCube;
-var collision;
 var thePlayer;
 var displaySpeed;
 var displayScore;
@@ -382,7 +381,7 @@ function SFXManager() {
       "audio": new Audio("sfx/explosion.mp3"),
       "interruptable": true},
     "collision": {
-      "audio": new Audio("sfx/laser.mp3"),
+      "audio": new Audio("sfx/collision.mp3"),
       "interruptable": true}
   };
 
@@ -425,6 +424,7 @@ function isCollision(asteroid, player) {
     player.shield -= 1;
     // red flashing screen.
 
+    SFX.play("collision");
     if (player.shield < 1) {
       console.log("Player should die");
     } else {
