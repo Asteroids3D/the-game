@@ -235,7 +235,7 @@ function manageKeyInput(player) {
         // Set to zero below certain point as we'll never get a precise zero otherwise
         if (Math.abs(player.velocity[0]) <= 0.01 &&
             Math.abs(player.velocity[1]) <= 0.01 &&
-            Math.abs(player.velocity[2])) {
+            Math.abs(player.velocity[2]) <= 0.01) {
           player.velocity = vec3();
           SFX.stop("thruster");
         } else {
@@ -392,7 +392,6 @@ function SFXManager() {
     if (this.SFX[sound].interruptable == true ||
         this.SFX[sound].audio.currentTime == 0) {
       // Call stop in case the sound is already playing (if applicable)
-      console.log("Playing");
       this.stop(sound);
       this.SFX[sound].audio.play();
     }
@@ -847,8 +846,6 @@ function drawAsteroid(asteroid) {
 
   // Check if this asteroid is colliding with the player or his lasers
   if (isCollision(asteroid, thePlayer)) {
-    console.log("you ded");
-
     // Killed by lasers, no need to continue drawing.
     if (roids.indexOf(asteroid) == -1) return;
   }
