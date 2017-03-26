@@ -121,7 +121,7 @@ window.onload = function init() {
   }
 
   // First alien in 30sec
-  setTimeout(callTheAliens, 30000);
+  setTimeout(callTheAliens, 3000);
 
   // HTML elements ------------------------------------
 
@@ -612,6 +612,11 @@ function isCollision(objA, objB) {
   else if (objA instanceof Alien) {
     if (objB instanceof Array)
       return isLaserCollision(objA, objB);
+    else if (isCollisionSizedObject(objA, objB.location))
+      if (objB instanceof Player) {
+        return true;
+      }
+      else console.log("alien crashing with asteroid");
   }
   return false;
 }
@@ -768,9 +773,9 @@ function Alien() {
   this.vSize = this.vertices.length;
   this.isActive = false;
   this.shield = 3;
-  this.speed = 1;
-  // Size 18 seems to be an appropriate hitbox.
-  this.size = 18;
+  this.speed = 3;
+  this.size = 20;
+  this.mass = 3000;
   this.scaleMatrix = scalem(12.0, 12.0, 12.0);
 
   this.location = vec3();
@@ -806,7 +811,7 @@ function Alien() {
     // Active for 20 sec.
     setTimeout(function() {
       this.isActive = false;
-    }.bind(this), 20000);
+    }.bind(this), 40000);
   }
 
   this.ambientColors = [
@@ -1085,7 +1090,7 @@ function SpaceCube() {
 
 function drawAsteroid(asteroid) {
 
-  // Check if this asteroid is colliding with the player or his lasers
+  // Check if this asteroid is colliding with the player
   if (isCollision(asteroid, thePlayer)) {
     collisionWithPlayer(thePlayer, asteroid);
     calculatePostCollisionVelocities(thePlayer, asteroid);
@@ -1104,7 +1109,7 @@ function drawAsteroid(asteroid) {
 
   // Wrap asteroids around
   for (var i = 0; i < 3; i++) {
-    if (Math.abs(asteroid.location[i]) > playBoxVertexRadius)
+    if (Math.abs(asteroid.location[i]) > playBoxVertexRadius+50)
       asteroid.location[i] = -1 * (asteroid.location[i] - asteroid.location[i] % playBoxVertexRadius);
   }
 
@@ -1294,7 +1299,7 @@ function drawAlien(alien) {
   alien.location = add(alien.location, alien.velocity);
 
   for (var i = 0; i < 3; i++) {
-    if (Math.abs(alien.location[i]) > playBoxVertexRadius)
+    if (Math.abs(alien.location[i]) > playBoxVertexRadius+50)
       alien.location[i] = -1 * (alien.location[i] - alien.location[i] % playBoxVertexRadius);
   }
 
@@ -1309,6 +1314,13 @@ function drawAlien(alien) {
       return;
     }
   }
+
+  // Check if the is colliding with the player
+  if (isCollision(alien, thePlayer)) {
+    collisionWithPlayer(thePlayer, alien);
+    calculatePostCollisionVelocities(thePlayer, alien);
+  }
+
 
   ctmAlien = mult(ctm, translate(alien.location));
   ctmAlien = mult(ctmAlien, alien.scaleMatrix);
