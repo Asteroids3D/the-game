@@ -39,6 +39,8 @@ var thePlayer;
 var displaySpeed;
 var displayScore;
 
+var asteroidSize;
+
 var fired;
 
 var playBoxVertexRadius;
@@ -84,14 +86,20 @@ window.onload = function init() {
 
   thePlayer = new Player();
 
+  asteroidSize = {
+    "big": 12,
+    "medium": 6,
+    "small": 3
+  };
+
   for (var i = 0; i < numberOfRoids / 3; i++) {
-    roids.push(new Asteroid(12));
+    roids.push(new Asteroid(asteroidSize.big));
   }
   for (var i = 0; i < numberOfRoids / 3; i++) {
-    roids.push(new Asteroid(6));
+    roids.push(new Asteroid(asteroidSize.medium));
   }
   for (var i = 0; i < numberOfRoids / 3; i++) {
-    roids.push(new Asteroid(3));
+    roids.push(new Asteroid(asteroidSize.small));
   }
 
   theSkybox = new Skybox();
@@ -478,10 +486,10 @@ function isCollision(asteroid, player) {
         lasers.isActive = false;
 
         // Deal with asteroids being hit
-        if (asteroid.size > 6) {
+        if (asteroid.size > asteroidSize.medium) {
           SFX.play("explosion_big");
           createSmallerAsteroids(asteroid, lasers);
-        } else if (asteroid.size > 3) {
+        } else if (asteroid.size > asteroidSize.small) {
           SFX.play("explosion_medium");
           createSmallerAsteroids(asteroid, lasers);
         }
@@ -490,8 +498,8 @@ function isCollision(asteroid, player) {
 
 
         // give player points & show on screen.
-        if (asteroid.size == 12) player.points += 1;
-        else if (asteroid.size == 6) player.points += 2;
+        if (asteroid.size == asteroidSize.big) player.points += 1;
+        else if (asteroid.size == asteroidSize.medium) player.points += 2;
         else player.points += 5;
         displayScore.innerText = player.points;
 
@@ -651,9 +659,9 @@ function Asteroid(size,
   this.location = location;
   this.direction = direction;
 
-  if (size == 12) speed = 0.1 + Math.random() * 0.4;
-  else if (size == 6) speed = 0.3 + Math.random() * 0.5;
-  else if (size == 3) speed = 0.5 + Math.random() * 0.6;
+  if (size == asteroidSize.big) speed = 0.1 + Math.random() * 0.4;
+  else if (size == asteroidSize.medium) speed = 0.3 + Math.random() * 0.5;
+  else if (size == asteroidSize.small) speed = 0.5 + Math.random() * 0.6;
 
   this.velocity = scale(speed, this.direction);
 
