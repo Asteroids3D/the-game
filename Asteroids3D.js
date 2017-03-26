@@ -433,8 +433,7 @@ function calculatePostCollisionVelocities(a, b) {
   var b_and_a_velocity_difference = subtract(b.velocity, a.velocity);
   var a_momentum_given_b_a_velocity_difference = scale(a.mass, b_and_a_velocity_difference);
   var dividend = subtract(combined_momentum_initial, a_momentum_given_b_a_velocity_difference);
-  var divisor = combined_mass;
-  var b_velocity_final = scale(1/divisor, dividend);
+  var b_velocity_final = scale(1/combined_mass, dividend);
   var a_velocity_final = add(b_and_a_velocity_difference, b_velocity_final);
   a.velocity = a_velocity_final;
   b.velocity = b_velocity_final;
