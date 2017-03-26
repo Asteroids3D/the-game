@@ -85,7 +85,7 @@ window.onload = function init() {
 
   roids = []
   newRoids = []
-  generateNewAsteroids(6, 8, 12);
+  generateNewAsteroids(3, 6, 24);
   roids = newRoids;
 
   theSkybox = new Skybox();
@@ -816,7 +816,7 @@ function LaserBeams() {
   this.laser1Location = vec3();
   this.laser2Location = vec3();
   this.direction = vec3();
-  this.speed = 8.0;
+  this.speed = 10.0;
   this.velocity = vec3();
   this.transformationMatrix = mat4();
   this.baseMatrix = mult(rotateX(90), scalem(3.0, 10.0, 3.0));
