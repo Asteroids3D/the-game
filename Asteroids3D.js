@@ -5,8 +5,6 @@ var program;
 var locMvMatrix, locProjMatrix, locPosition, locColor;
 
 // rotate variables
-var rotates, xSpin, ySpin, oldX, oldY;
-
 var ctm, rotator;
 
 var pitch, yaw;
@@ -75,8 +73,6 @@ window.onload = function init() {
   laserBeamModel = new LaserBeamModel();
 
   SFX = new SFXManager();
-
-  xSpin = ySpin = oldX = oldY = 0.0; // Ekki í notkun eins og er.
 
 	playBoxVertexRadius = 300;
   aspect = gl.clientWidth / gl.clientHeight;
@@ -155,27 +151,6 @@ window.onload = function init() {
   // Minna vesen svona.
   var persp = perspective(80.0, aspect, 0.1, 5000.0);
   gl.uniformMatrix4fv(locProjMatrix, false, flatten(persp));
-
-  // Erum ekkert að nota músina eina og er, en það má alveg hafa það með ?
-  canvas.addEventListener("mousedown", function(e) {
-    rotates = true;
-      oldX = e.offsetX;
-      oldY = e.offsetY;
-      e.preventDefault();
-  });
-
-  canvas.addEventListener("mousemove", function(e) {
-    if (rotates) {
-      xSpin = (xSpin + (e.offsetY - oldY)/4) % 360;
-      ySpin = (ySpin + (e.offsetX - oldX)/4) % 360;
-      oldX = e.offsetX;
-      oldY = e.offsetY;
-    }
-  });
-
-  window.addEventListener("mouseup", function() {
-    rotates = false;
-  });
 
   key = {
     pressed: {},
