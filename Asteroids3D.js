@@ -426,10 +426,18 @@ function SFXManager() {
 }
 
 function calculatePostCollisionVelocities(a, b) {
-  combined_velocity_initial = (mass1 * vel1_initial) + (mass2 * vel2_initial);
-  vel2_vel1_diff = vel2_initial - vel1_initial;
-  vel2_final = (combined_velocity_initial - (mass1*vel2_vel1_diff))/(mass1+mass2);
-  vel1_final = vel2_initial - vel1_initial + vel2_final;
+  var a_momentum = scale(a.mass, a.velocity);
+  var b_momentum = scale(b.mass, b.velocity);
+  var combined_momentum_initial = add(a_momentum, b_momentum);
+  var combined_mass = a.mass + b.mass;
+  var b_and_a_velocity_difference = subtract(b.velocity, a.velocity);
+  var a_momentum_given_b_a_velocity_difference = scale(a.mass, b_and_a_velocity_difference);
+  var dividend = subtract(combined_momentum_initial, a_momentum_given_b_a_velocity_difference);
+  var divisor = combined_mass;
+  var b_velocity_final = scale(1/divisor, dividend);
+  var a_velocity_final = add(b_and_a_velocity_difference, b_velocity_final);
+  a.velocity = a_velocity_final;
+  b.velocity = b_velocity_final;
 }
 
 function isCollision(asteroid, player) {
@@ -464,6 +472,7 @@ function isCollision(asteroid, player) {
     player.shield -= 1;
     // red flashing screen.
 
+    calculatePostCollisionVelocities(asteroid, player);
     SFX.play("collision");
     if (player.shield < 1) {
       console.log("Player should die");
@@ -562,7 +571,7 @@ function Player() {
   this.direction = vec3(0.0, 0.0, 1.0);
   this.acceleration = 0.01;
   this.velocity = vec3();
-  this.mass = 80;
+  this.mass = 800;
   this.lookSpeed = 1.5;
   this.points = 0;
   this.shield = 5;
