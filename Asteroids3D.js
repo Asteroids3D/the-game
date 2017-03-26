@@ -498,12 +498,12 @@ function SFXManager() {
       "audio": new Audio("sfx/explosion_small.mp3"),
       "interruptable": true},
     "collision": {
-      "audio": new Audio("sfx/collision.mp3"),
+      "audio": new Audio("sfx/collision2.mp3"),
       "interruptable": true}
   };
 
   this.SFX.explosion_medium.audio.volume = 0.5;
-  this.SFX.explosion_small.audio.volume = 0.2;
+  this.SFX.explosion_small.audio.volume = 0.8;
 
   this.play = function(sound) {
     if (!this.soundsEnabled)
