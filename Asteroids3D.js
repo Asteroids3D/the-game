@@ -425,6 +425,13 @@ function SFXManager() {
   };
 }
 
+function calculatePostCollisionVelocities(a, b) {
+  combined_velocity_initial = (mass1 * vel1_initial) + (mass2 * vel2_initial);
+  vel2_vel1_diff = vel2_initial - vel1_initial;
+  vel2_final = (combined_velocity_initial - (mass1*vel2_vel1_diff))/(mass1+mass2);
+  vel1_final = vel2_initial - vel1_initial + vel2_final;
+}
+
 function isCollision(asteroid, player) {
   function checkCollisionWithObject(objLocation) {
     if ((objLocation[0] >= roidX - size && objLocation[0] <= roidX + size)
@@ -555,7 +562,7 @@ function Player() {
   this.direction = vec3(0.0, 0.0, 1.0);
   this.acceleration = 0.01;
   this.velocity = vec3();
-  this.weight = 80;
+  this.mass = 80;
   this.lookSpeed = 1.5;
   this.points = 0;
   this.shield = 5;
@@ -761,7 +768,7 @@ function Asteroid(size,
 
   // Árekstur
   // Notum til að reikna út nýtt velocity við árekstur.
-  this.weight = size * 100;
+  this.mass = size * 100;
 
   // Lighting -------------------------------------
 
