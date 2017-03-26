@@ -1,5 +1,6 @@
 var gl;
 var program;
+var canvas;
 
 // GLSL variables
 var locMvMatrix, locProjMatrix, locPosition, locColor;
@@ -7,16 +8,11 @@ var locMvMatrix, locProjMatrix, locPosition, locColor;
 // rotate variables
 var ctm, rotator;
 
-var pitch, yaw;
 var theSkybox;
 var locSkybox;
 var locVcoloringMode, locFcoloringMode;
 
 var key;
-var rotateSpeed;
-var canvas;
-
-var accelerationVector, movementVector;
 
 var PR;
 
@@ -39,7 +35,6 @@ var displayScore;
 
 var asteroidSize;
 
-var fired;
 
 var playBoxVertexRadius;
 
@@ -49,6 +44,8 @@ var alienModel;
 
 var theAlien;
 var SFX;
+
+var theGame;
 
 window.onload = function init() {
 
@@ -71,6 +68,8 @@ window.onload = function init() {
 
   PR = PlyReader();
 
+  theGame = new Game();
+
   asteroidModel = new AsteroidModel();
   laserBeamModel = new LaserBeamModel();
   alienModel = new AlienModel();
@@ -82,24 +81,19 @@ window.onload = function init() {
   aspect = gl.clientWidth / gl.clientHeight;
   numberOfRoids = 36; // multiple of 3
   roids = [];
-  fired = false;
+
 
   thePlayer = new Player();
 
-  asteroidSize = {
-    "big": 12,
-    "medium": 6,
-    "small": 3
-  };
 
   for (var i = 0; i < numberOfRoids / 3; i++) {
-    roids.push(new Asteroid(asteroidSize.big));
+    roids.push(new Asteroid(Asteroid.LARGE));
   }
   for (var i = 0; i < numberOfRoids / 3; i++) {
-    roids.push(new Asteroid(asteroidSize.medium));
+    roids.push(new Asteroid(Asteroid.MEDIUM));
   }
   for (var i = 0; i < numberOfRoids / 3; i++) {
-    roids.push(new Asteroid(asteroidSize.small));
+    roids.push(new Asteroid(Asteroid.SMALL));
   }
 
   theSkybox = new Skybox();
@@ -126,13 +120,20 @@ window.onload = function init() {
     setTimeout(callTheAliens, delay);
   }
 
-  // First alien in 10sec
-  setTimeout(callTheAliens, 10000);
+  // First alien in 30sec
+  setTimeout(callTheAliens, 30000);
 
   // HTML elements ------------------------------------
 
   displaySpeed = document.getElementById("display-speed");
   displayScore = document.getElementById("display-score");
+
+  menuPlay = document.getElementById("btn-play");
+
+  dashboard = document.querySelector(".dashboard");
+  crosshairs = document.querySelector(".crosshairs");
+  menu = document.querySelector(".main-menu");
+
 
   // GLSL variables -----------------------------------
 
@@ -186,6 +187,8 @@ window.onload = function init() {
     ACCELERATE: 16, // SHIFT
     DECELERATE: 90, // Z
     REVERSE: 88, // X
+    PAUSE: 80, // P
+    PAUSE2: 27, // ESC
 
     isDown: function(keyCode) {
       return this.pressed[keyCode]
@@ -195,9 +198,19 @@ window.onload = function init() {
     },
     onKeyUp: function(e) {
       delete this.pressed[e.keyCode];
-      if (e.keyCode == key.FIRE) fired = false;
     },
 
+  }
+
+  menuPlay.onclick = function() {
+    dashboard.style.display = "flex";
+    menu.style.display = "none";
+    crosshairs.style.display = "flex";
+
+
+
+
+    theGame.isOn = true;
   }
 
   window.addEventListener("keyup", function(e) {
@@ -205,9 +218,15 @@ window.onload = function init() {
     if (!key.isDown(key.ACCELERATE) && !key.isDown(key.DECELERATE) && !key.isDown(key.REVERSE)) {
       SFX.stop("thruster");
     }
+
+    if (e.keyCode == key.FIRE) thePlayer.fired = false;
+    if (e.keyCode == key.PAUSE || e.keyCode == key.PAUSE2) theGame.pauseLock = false;
   });
 
-  window.addEventListener("keydown", function(e) { key.onKeyDown(e); });
+  window.addEventListener("keydown", function(e) {
+    key.onKeyDown(e);
+    if (e.keyCode == key.PAUSE || e.keyCode == key.PAUSE2) theGame.pauseHandler();
+  });
 
   render();
 }
@@ -244,7 +263,7 @@ function manageKeyInput(player) {
                                 scale(player.acceleration, nseNormalize(player.velocity)));
         }
       }
-      displaySpeed.innerText = player.getSpeed().toFixed(2);
+      displaySpeed.innerText = player.getSpeed().toFixed(1);
     }
     if (key.isDown(key.REVERSE)) {
       SFX.play("thruster");
@@ -252,12 +271,35 @@ function manageKeyInput(player) {
       player.velocity = subtract(player.velocity,
                             scale(player.acceleration, player.direction));
 
-      displaySpeed.innerText = player.getSpeed().toFixed(2);
+      displaySpeed.innerText = player.getSpeed().toFixed(1);
     }
     if (key.isDown(key.FIRE)) {
-      if (fired == false) thePlayer.fireLasers();
-      fired = true;
+      if (player.fired == false) thePlayer.fireLasers();
+      player.fired = true;
     }
+}
+
+function Game() {
+  this.isOn = false;
+  this.paused = false;
+  this.pauseLock = false;
+
+  this.start = function(/* game settings? */) {
+    this.beginTime = new Date();
+
+
+    this.isOn = true;
+  }
+
+  this.pauseHandler = function() {
+    if (!this.pauseLock) {
+      this.pauseLock = true;
+      this.paused = !this.paused;
+
+      if (!this.paused) render();
+    }
+  }
+
 }
 
 function setPerspective() {
@@ -443,6 +485,7 @@ function calculatePostCollisionVelocities(a, b) {
 }
 
 function isCollision(asteroid, player) {
+  if (!theGame.isOn) return;
   function checkCollisionWithObject(objLocation) {
     if ((objLocation[0] >= roidX - size && objLocation[0] <= roidX + size)
      && (objLocation[1] >= roidY - size && objLocation[1] <= roidY + size)
@@ -478,15 +521,17 @@ function isCollision(asteroid, player) {
     SFX.play("collision");
     if (player.shield < 1) {
       console.log("Player should die");
+      player.velocity = vec3();
+      theGame.isOn = false;
+
+      // Show dead message on screen for x sec?
+
+
     } else {
       // gefum 2 sek í recovery eftir roid bump.
       player.isImmune = true;
       setTimeout(function() { player.isImmune = false; }, 2000);
-      /*
-      var weightProportion = player.weight / (player.weight + asteroid.weight);
-      player.velocity = scale();
-      asteroid.velocity = scale();
-      */
+
     }
   }
 
@@ -498,10 +543,10 @@ function isCollision(asteroid, player) {
         lasers.isActive = false;
 
         // Deal with asteroids being hit
-        if (asteroid.size > asteroidSize.medium) {
+        if (asteroid.size > Asteroid.MEDIUM) {
           SFX.play("explosion_big");
           createSmallerAsteroids(asteroid, lasers);
-        } else if (asteroid.size > asteroidSize.small) {
+        } else if (asteroid.size > Asteroid.SMALL) {
           SFX.play("explosion_medium");
           createSmallerAsteroids(asteroid, lasers);
         }
@@ -510,9 +555,9 @@ function isCollision(asteroid, player) {
 
 
         // give player points & show on screen.
-        if (asteroid.size == asteroidSize.big) player.points += 1;
-        else if (asteroid.size == asteroidSize.medium) player.points += 2;
-        else if (asteroid.size == asteroidSize.small) player.points += 5;
+        if (asteroid.size == Asteroid.LARGE) player.points += 1;
+        else if (asteroid.size == Asteroid.MEDIUM) player.points += 2;
+        else if (asteroid.size == Asteroid.SMALL) player.points += 5;
         else player.points += 25; // shootin' the aliens
 
         displayScore.innerText = player.points;
@@ -578,6 +623,7 @@ function Player() {
   this.points = 0;
   this.shield = 5;
   this.isImmune = false;
+  this.fired = false;
 
   this.yaw = 0.0;
   this.pitch = 0.0;
@@ -750,6 +796,10 @@ function Asteroid(size,
                   location = createRandomCoords(),
                   direction = normalize(createRandomCoords())) {
 
+  Asteroid.LARGE = 12;
+  Asteroid.MEDIUM = 6;
+  Asteroid.SMALL = 3;
+
   // Object data ---------------------------------
 
   this.vertices = asteroidModel.vertices;
@@ -762,9 +812,10 @@ function Asteroid(size,
   this.location = location;
   this.direction = direction;
 
-  if (size == asteroidSize.big) speed = 0.1 + Math.random() * 0.4;
-  else if (size == asteroidSize.medium) speed = 0.3 + Math.random() * 0.5;
-  else if (size == asteroidSize.small) speed = 0.5 + Math.random() * 0.6;
+  var speed;
+  if (size == Asteroid.LARGE) speed = 0.1 + Math.random() * 0.4;
+  else if (size == Asteroid.MEDIUM) speed = 0.3 + Math.random() * 0.5;
+  else if (size == Asteroid.SMALL) speed = 0.5 + Math.random() * 0.6;
 
   this.velocity = scale(speed, this.direction);
 
@@ -1261,7 +1312,7 @@ function render() {
       drawLasers(thePlayer.Lasers[i]);
   }
 
-  manageKeyInput(thePlayer);
+  if (theGame.isOn) manageKeyInput(thePlayer);
 
-  window.requestAnimFrame(render);
+  if (!theGame.paused) window.requestAnimFrame(render);
 }

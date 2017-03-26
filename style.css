@@ -30,7 +30,7 @@ canvas {
   color: cyan;
   font-family: Consolas;
   font-size:2.5em;
-  display: flex;
+  display: none;
   justify-content: space-between;
 }
 
@@ -63,4 +63,40 @@ p { margin: 0; }
   display: flex;
   justify-content: center;
   align-items: center;
+  display: none;
+}
+
+.main-menu {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0,255,255, 0.3);
+  flex-direction: column;
+  color: white;
+  padding: 30px;
+  border: 2px outset white;
+  border-radius: 5px;
+}
+
+.btn {
+  margin: 5px;
+  padding: 5px;
+  font-size: 18px;
+  background-color: #10F;
+  color: white;
+  width: 90%;
+  border-radius: 5px;
+}
+
+hr {
+  height: 1px;
+  color: white;
+  background-color: white;
+  border-color: white;
+  width: 100%;
+}
+
+#game-title {
+
 }
