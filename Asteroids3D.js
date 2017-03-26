@@ -1300,7 +1300,7 @@ function drawAlien(alien) {
 
   for (var i = 0; i < 3; i++) {
     if (Math.abs(alien.location[i]) > playBoxVertexRadius+50)
-      alien.location[i] = -1 * (alien.location[i] - alien.location[i] % playBoxVertexRadius);
+      alien.velocity = scale(-1, alien.velocity);
   }
 
   var laserHit = isCollision(alien, thePlayer.Lasers);
