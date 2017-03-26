@@ -116,7 +116,34 @@
       <div class="menu-container" id="instructions-container">
         <article>
           <h1>Instructions</h1>
-          <p>kill the roids with your super laser gun or die.</p>
+          <p class="subtitle lg">Controls:</p>
+          <p><span class="subtitle">SPACEBAR:</span> Shoots lasers.</p>
+          <p><span class="subtitle">SHIFT:</span> Thrust in the currently viewed direction.</p>
+          <p><span class="subtitle">WASD and ARROW KEYS:</span> Changes the viewing direction.</p>
+          <p><span class="subtitle">Z:</span> Decelerate based on current velocity vector until speed is 0.</p>
+          <p><span class="subtitle">X:</span> Reverse thrust based on viewing direction.</p>
+          <p><span class="subtitle">P and ESC:</span> Toggle pausing the game. pausing brings up the main menu.</p>
+          <hr>
+          <p class="subtitle lg">Game mechanics:</p>
+          <p><span class="subtitle">POINTS:</span>
+            Earn points by shooting asteroids and aliens. Large asteroids give 1 point,
+            medium give 2 points, small give 5 points, and aliens give 25 points.
+          </p>
+          <p><span class="subtitle">DEATH:</span>
+            You start with 5 shield points. You lose shield points by crashing into asteroids or aliens.
+            Once you have no shield points left and you crash, it's game over.
+          </p>
+          <p><span class="subtitle">BUMPING:</span>
+            When you bump an asteroid or alien, your velocity vectors and mass are used to calculate
+            new velocity vectors, so you can effectively bump asteroids and aliens.
+          </p>
+          <p><span class="subtitle">MOVEMENT:</span>
+            We tried to make the movement realistic for space so that when you have reached a certain
+            velocity through acceleration, the velocity persists. When accelerating in a new direction
+            the new velocity vector is calculated based on the previous vector. Also, based on this goal,
+            there is no speed limit. When you move through one of the 6 faces of the cube wireframe, you
+            are teleported to the opposite side of the cube.
+          </p>
         </article>
         <div class="nav-controls">
           <button type="button" class="btn btn-back" id="btn-back-instructions">Back</button>
@@ -126,7 +153,17 @@
       <div class="menu-container" id="about-container">
         <article>
           <h1>About the game</h1>
-          <p>We are dudes who made a space shooter.</p>
+          <p class="subtitle">The authors:</p>
+          <p>Ólafur Ingi Guðmundsson and Örnarsson.</p>
+          <span>
+            These guys are studying Computer Science at the University of Iceland.
+            They like ice cream and shooting aliens and rocks.
+          </span>
+          <p class="subtitle">The game:</p>
+          <span>
+            The game was created for a final assignment in a Computer graphics course
+            at the University of Iceland.
+          </span>
         </article>
         <div class="nav-controls">
           <button type="button" class="btn btn-back" id="btn-back-about">Back</button>
@@ -134,7 +171,7 @@
         </div>
       </div>
       <div class="menu-container" id="highscore-container">
-        <h1>High score</h1>
+        <h1>High Scores</h1>
         <p>1. <span id="score-1"></span></p>
         <p>2. <span id="score-2"></span></p>
         <p>3. <span id="score-3"></span></p>

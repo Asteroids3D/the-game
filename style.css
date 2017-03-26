@@ -77,10 +77,27 @@ p { margin: 0; }
   padding: 30px;
   border: 2px outset white;
   border-radius: 5px;
+  max-width: 500px;
+}
+
+.subtitle {
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+#instructions-container p {
+  margin-bottom: 15px;
 }
 
 #main-container {
   display: flex;
+}
+
+h1 { text-align: center;}
+
+.lg {
+  font-size: 20px;
+  text-align: center;
 }
 
 
@@ -104,4 +121,8 @@ hr {
 
 .btn-resume {
   display: none;
+}
+
+.nav-controls {
+  margin: 20px;
 }
