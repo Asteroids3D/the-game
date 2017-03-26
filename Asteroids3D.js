@@ -264,8 +264,10 @@ window.onload = function init() {
   window.addEventListener("keydown", function(e) {
     key.onKeyDown(e);
     if (e.keyCode == key.PAUSE || e.keyCode == key.PAUSE2) {
-      theGame.pauseLock = true;
-      theGame.pauseHandler();
+      if (theGame.isOn) {
+        theGame.pauseLock = true;
+        theGame.pauseHandler();
+      }
     }
   });
 
