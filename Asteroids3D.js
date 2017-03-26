@@ -1295,6 +1295,7 @@ function drawAsteroid(asteroid) {
   if (isCollision(asteroid, thePlayer)) {
     collisionWithPlayer(thePlayer, asteroid);
     calculatePostCollisionVelocities(thePlayer, asteroid);
+    displaySpeed.innerText = thePlayer.getSpeed().toFixed(2);
   }
 
   // Check collision with lasers
