@@ -572,13 +572,13 @@ function collisionWithPlayer(player, obj) {
   setTimeout(function() { player.isImmune = false; }, 2000);
 }
 
-function isLaserCollision(collisionChecker, obj, lasers) {
+function isLaserCollision(obj, lasers) {
   for (var i=0; i < lasers.length; i++) {
     if (lasers[i] instanceof LaserBeams) {
       if (!lasers[i].isActive)
         return false;
-      if (collisionChecker(obj, lasers[i].laser1Location) ||
-          collisionChecker(obj, lasers[i].laser2Location)) {
+      if (isCollisionSizedObject(obj, lasers[i].laser1Location) ||
+          isCollisionSizedObject(obj, lasers[i].laser2Location)) {
         lasers[i].isActive = false;
         return i;
       }
@@ -592,7 +592,7 @@ function isCollision(objA, objB) {
     return false;
   if (objA instanceof Asteroid) {
     if (objB instanceof Array)
-      return (isLaserCollision(isCollisionSizedObject, objA, objB));
+      return isLaserCollision(objA, objB);
     else if (isCollisionSizedObject(objA, objB.location)) {
       if (objB instanceof Player) {
         return true;
@@ -605,7 +605,7 @@ function isCollision(objA, objB) {
   }
   else if (objA instanceof Alien) {
     if (objB instanceof Array)
-      return (isLaserCollision(isCollisionSizedObject, objA, objB));
+      return isLaserCollision(objA, objB);
   }
   return false;
 }
@@ -758,8 +758,8 @@ function Alien() {
   this.isActive = false;
   this.shield = 3;
   this.speed = 1;
-  // Size 17 seems to be an appropriate hitbox.
-  this.size = 17;
+  // Size 18 seems to be an appropriate hitbox.
+  this.size = 18;
   this.scaleMatrix = scalem(12.0, 12.0, 12.0);
 
   this.location = vec3();
