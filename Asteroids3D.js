@@ -412,7 +412,7 @@ function SFXManager() {
       sound = "laser" + parseInt(Math.random() * (6 - 1) + 1);
 
     if (this.SFX[sound].interruptable == true ||
-        this.SFX[sound].audio.currentTime == 0) {
+        this.SFX[sound].audio.paused == true) {
       // Call stop in case the sound is already playing (if applicable)
       this.stop(sound);
       this.SFX[sound].audio.play();
