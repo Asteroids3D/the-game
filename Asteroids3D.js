@@ -19,8 +19,8 @@ var PR;
 var lightPosition;
 var lightAmbient, lightDiffuse, lightSpecular;
 
-var numberOfRoids;
 var roids;
+var newRoids;
 
 var normalMatrix;
 var theSun;
@@ -78,24 +78,16 @@ window.onload = function init() {
 
   SFX = new SFXManager();
 
-	playBoxVertexRadius = 300;
+  playBoxVertexRadius = 300;
   aspect = gl.clientWidth / gl.clientHeight;
-  numberOfRoids = 36; // multiple of 3
-  roids = [];
 
 
   thePlayer = new Player();
 
-
-  for (var i = 0; i < numberOfRoids / 3; i++) {
-    roids.push(new Asteroid(Asteroid.LARGE));
-  }
-  for (var i = 0; i < numberOfRoids / 3; i++) {
-    roids.push(new Asteroid(Asteroid.MEDIUM));
-  }
-  for (var i = 0; i < numberOfRoids / 3; i++) {
-    roids.push(new Asteroid(Asteroid.SMALL));
-  }
+  roids = []
+  newRoids = []
+  generateNewAsteroids(3, 4, 12);
+  roids = newRoids;
 
   theSkybox = new Skybox();
   theSpaceCube = new SpaceCube();
@@ -122,7 +114,17 @@ window.onload = function init() {
   }
 
   // First alien in 30sec
-  setTimeout(callTheAliens, 3000);
+  setTimeout(callTheAliens, 30000);
+
+  // New Asteroid roughly every 45-120 seconds
+  function summonAsteroid() {
+    var delay = (45 + Math.random() * 75) * 1000;
+    addNewAsteroid();
+    setTimeout(summonAsteroid, delay);
+  }
+  // Summon the first Asteroid after same delay
+  setTimeout(summonAsteroid, (45 + Math.random() * 70)*1000);
+
 
   // HTML elements ------------------------------------
 
@@ -433,47 +435,6 @@ function loadHighScore() {
   }
 }
 
-function Game() {
-  this.isOn = false;
-  this.paused = false;
-  this.pauseLock = false;
-
-  this.start = function(/* game settings? */) {
-    //this.beginTime = new Date();
-
-
-    if (this.paused) {
-      // ekki fyrsti leikur, fyrir leikur paused.
-
-      this.paused = false;
-      render();
-    }
-    this.isOn = true;
-  }
-
-  this.pauseHandler = function() {
-    this.paused = !this.paused;
-
-    if (!this.paused) {
-      dashboard.style.display = "flex";
-      crosshairs.style.display = "flex";
-
-      for (var i = 0; i < menuContainers.length; i++) {
-        menuContainers[i].style.display = "none";
-      }
-
-      render();
-    } else {
-      dashboard.style.display = "none";
-      crosshairs.style.display = "none";
-      menuMain.style.display = "flex";
-      for (var i = 0; i < btnsResumeGame.length; i++) {
-        btnsResumeGame[i].style.display = "block";
-      }
-    }
-  }.bind(this)
-}
-
 function setPerspective() {
   var displayWidth  = canvas.clientWidth;
   var displayHeight = canvas.clientHeight;
@@ -488,6 +449,27 @@ function setPerspective() {
 
     gl.viewport( 0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight );
   }
+}
+
+function addNewAsteroid() {
+  function chooseSide() {
+    return (Math.random() > 0.5 ? -playBoxVertexRadius+1 : playBoxVertexRadius-1);
+  }
+  var asteroid = new Asteroid(Asteroid.LARGE);
+  var axisChooser = parseInt(Math.random() * 3);
+  // Choose random side of random axis
+  asteroid.location[axisChooser] = chooseSide();
+  roids.push(asteroid);
+}
+
+function generateNewAsteroids(nBig, nMedium, nSmall) {
+  newRoids = [];
+  for (var i = 0; i < nBig; i++)
+    newRoids.push(new Asteroid(Asteroid.LARGE));
+  for (var i = 0; i < nMedium; i++)
+    newRoids.push(new Asteroid(Asteroid.MEDIUM));
+  for (var i = 0; i < nSmall; i++)
+    newRoids.push(new Asteroid(Asteroid.SMALL));
 }
 
 function getSphericalDirection(pitch, yaw) {
@@ -628,12 +610,12 @@ function SFXManager() {
       "audio": new Audio("sfx/explosion_small.mp3"),
       "interruptable": true},
     "collision": {
-      "audio": new Audio("sfx/collision.mp3"),
+      "audio": new Audio("sfx/collision2.mp3"),
       "interruptable": true}
   };
 
   this.SFX.explosion_medium.audio.volume = 0.5;
-  this.SFX.explosion_small.audio.volume = 0.2;
+  this.SFX.explosion_small.audio.volume = 0.8;
 
   this.play = function(sound) {
     if (!this.soundsEnabled)
@@ -785,8 +767,8 @@ function isCollision(objA, objB) {
         return true;
       }
       else if (objB instanceof Alien) {
-        console.log("alien/asteroid collision");
-        return true;
+        if (objB.isActive)
+          return true;
       }
     }
   }
@@ -797,7 +779,6 @@ function isCollision(objA, objB) {
       if (objB instanceof Player) {
         return true;
       }
-      else console.log("alien crashing with asteroid");
   }
   return false;
 }
@@ -834,6 +815,48 @@ function AlienModel() {
 
 
 // Object constructors ----------------------------------
+
+function Game() {
+  this.isOn = false;
+  this.paused = false;
+  this.pauseLock = false;
+
+  this.start = function(/* game settings? */) {
+    //this.beginTime = new Date();
+
+
+    if (this.paused) {
+      // ekki fyrsti leikur, fyrir leikur paused.
+
+      this.paused = false;
+      render();
+    }
+    generateNewAsteroids(4, 0, 0);
+    this.isOn = true;
+  }
+
+  this.pauseHandler = function() {
+    this.paused = !this.paused;
+
+    if (!this.paused) {
+      dashboard.style.display = "flex";
+      crosshairs.style.display = "flex";
+
+      for (var i = 0; i < menuContainers.length; i++) {
+        menuContainers[i].style.display = "none";
+      }
+
+      render();
+    } else {
+      dashboard.style.display = "none";
+      crosshairs.style.display = "none";
+      menuMain.style.display = "flex";
+      for (var i = 0; i < btnsResumeGame.length; i++) {
+        btnsResumeGame[i].style.display = "block";
+      }
+    }
+  }.bind(this)
+}
 
 function Player() {
 
@@ -926,7 +949,7 @@ function LaserBeams() {
   this.laser1Location = vec3();
   this.laser2Location = vec3();
   this.direction = vec3();
-  this.speed = 8.0;
+  this.speed = 10.0;
   this.velocity = vec3();
   this.transformationMatrix = mat4();
   this.baseMatrix = mult(rotateX(90), scalem(3.0, 10.0, 3.0));
@@ -977,7 +1000,7 @@ function Alien() {
 
     this.location = createRandomCoords();
     // Birtist hjá öðrum hvorum x = 300 veggnum.
-    this.location[0] = Math.random() > 0.5 ? -300 : 300;
+    this.location[0] = Math.random() > 0.5 ? -playBoxVertexRadius+1 : playBoxVertexRadius-1;
 
     // diversity
     var index = Math.floor(Math.random()*5);
@@ -1027,9 +1050,9 @@ function Asteroid(size,
                   location = createRandomCoords(),
                   direction = normalize(createRandomCoords())) {
 
-  Asteroid.LARGE = 12;
-  Asteroid.MEDIUM = 6;
-  Asteroid.SMALL = 3;
+  Asteroid.LARGE = 36;
+  Asteroid.MEDIUM = 18;
+  Asteroid.SMALL = 9;
 
   // Object data ---------------------------------
 
@@ -1044,9 +1067,9 @@ function Asteroid(size,
   this.direction = direction;
 
   var speed;
-  if (size == Asteroid.LARGE) speed = 0.1 + Math.random() * 0.4;
-  else if (size == Asteroid.MEDIUM) speed = 0.3 + Math.random() * 0.5;
-  else if (size == Asteroid.SMALL) speed = 0.5 + Math.random() * 0.6;
+  if (size == Asteroid.LARGE) speed = 1.0 + Math.random() * 1.5;
+  else if (size == Asteroid.MEDIUM) speed = 1.2 + Math.random() * 1.8;
+  else if (size == Asteroid.SMALL) speed = 1.8 + Math.random() * 2.5;
 
   this.velocity = scale(speed, this.direction);
 
@@ -1573,12 +1596,18 @@ function render() {
   drawSpaceCube(theSpaceCube);
   if (theAlien.isActive) drawAlien(theAlien);
 
-	for (var i = 0; i < thePlayer.numberOfLasers; i++) {
+  for (var i = 0; i < thePlayer.numberOfLasers; i++) {
     if (thePlayer.Lasers[i].isActive)
       drawLasers(thePlayer.Lasers[i]);
   }
 
-  if (theGame.isOn) manageKeyInput(thePlayer);
+  if (theGame.isOn) {
+    manageKeyInput(thePlayer);
+    if (newRoids.length > 0) {
+      roids = [];
+      roids = newRoids;
+    }
+  }
 
   if (!theGame.paused) window.requestAnimFrame(render);
 }
