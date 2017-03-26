@@ -570,7 +570,7 @@ function Player() {
   this.direction = vec3(0.0, 0.0, 1.0);
   this.acceleration = 0.01;
   this.velocity = vec3();
-  this.mass = 800;
+  this.mass = 2000;
   this.lookSpeed = 1.5;
   this.points = 0;
   this.shield = 5;
