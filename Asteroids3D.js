@@ -422,6 +422,9 @@ function SFXManager() {
   this.musicEnabled = true;
 
   this.SFX = {
+    "laser0": {
+      "audio": new Audio("sfx/laser0.mp3"),
+      "interruptable": true},
     "laser1": {
       "audio": new Audio("sfx/laser1.mp3"),
       "interruptable": true},
@@ -434,8 +437,20 @@ function SFXManager() {
     "laser4": {
       "audio": new Audio("sfx/laser4.mp3"),
       "interruptable": true},
-    "laser5": {
-      "audio": new Audio("sfx/laser5.mp3"),
+    "shieldhit0": {
+      "audio": new Audio("sfx/shieldhit0.mp3"),
+      "interruptable": true},
+    "shieldhit1": {
+      "audio": new Audio("sfx/shieldhit1.mp3"),
+      "interruptable": true},
+    "shieldhit2": {
+      "audio": new Audio("sfx/shieldhit2.mp3"),
+      "interruptable": true},
+    "shieldhit3": {
+      "audio": new Audio("sfx/shieldhit3.mp3"),
+      "interruptable": true},
+    "shieldhit4": {
+      "audio": new Audio("sfx/shieldhit4.mp3"),
       "interruptable": true},
     "thruster": {
       "audio": new Audio("sfx/thruster.mp3"),
@@ -464,7 +479,10 @@ function SFXManager() {
     if (!this.soundsEnabled)
       return;
     if (sound == "laser")
-      sound = "laser" + parseInt(Math.random() * (6 - 1) + 1);
+      sound = "laser" + parseInt(Math.random() * 5);
+    if (sound == "shieldhit") {
+      sound = "shieldhit" + parseInt(Math.random() * 5);
+    }
 
     if (this.SFX[sound].interruptable == true ||
         this.SFX[sound].audio.paused == true) {
@@ -503,15 +521,15 @@ function calculatePostCollisionVelocities(a, b) {
   b.velocity = b_velocity_final;
 }
 
-function isCollisionAsteroid(asteroid, objLocation) {
-  var roidX = asteroid.location[0];
-  var roidY = asteroid.location[1];
-  var roidZ = asteroid.location[2];
-  var size = asteroid.size;
+function isCollisionSizedObject(sizedObject, objLocation) {
+  var soX = sizedObject.location[0];
+  var soY = sizedObject.location[1];
+  var soZ = sizedObject.location[2];
+  var size = sizedObject.size;
 
-  if ((objLocation[0] >= roidX - size && objLocation[0] <= roidX + size)
-   && (objLocation[1] >= roidY - size && objLocation[1] <= roidY + size)
-   && (objLocation[2] >= roidZ - size && objLocation[2] <= roidZ + size)) {
+  if ((objLocation[0] >= soX - size && objLocation[0] <= soX + size)
+   && (objLocation[1] >= soY - size && objLocation[1] <= soY + size)
+   && (objLocation[2] >= soZ - size && objLocation[2] <= soZ + size)) {
     // Object collision!
     return true;
   }
@@ -554,24 +572,28 @@ function collisionWithPlayer(player, obj) {
   setTimeout(function() { player.isImmune = false; }, 2000);
 }
 
+function isLaserCollision(collisionChecker, obj, lasers) {
+  for (var i=0; i < lasers.length; i++) {
+    if (lasers[i] instanceof LaserBeams) {
+      if (!lasers[i].isActive)
+        return false;
+      if (collisionChecker(obj, lasers[i].laser1Location) ||
+          collisionChecker(obj, lasers[i].laser2Location)) {
+        lasers[i].isActive = false;
+        return i;
+      }
+    }
+  }
+  return false;
+}
+
 function isCollision(objA, objB) {
   if (!theGame.isOn)
     return false;
   if (objA instanceof Asteroid) {
-    if (objB instanceof Array) {
-      for (var i=0; i < objB.length; i++) {
-        if (objB[i] instanceof LaserBeams) {
-          if (!objB[i].isActive)
-            return false;
-          if (isCollisionAsteroid(objA, objB[i].laser1Location) ||
-              isCollisionAsteroid(objA, objB[i].laser2Location)) {
-            objB[i].isActive = false;
-            return i;
-          }
-        }
-      }
-    }
-    else if (isCollisionAsteroid(objA, objB.location)) {
+    if (objB instanceof Array)
+      return (isLaserCollision(isCollisionSizedObject, objA, objB));
+    else if (isCollisionSizedObject(objA, objB.location)) {
       if (objB instanceof Player) {
         return true;
       }
@@ -580,6 +602,10 @@ function isCollision(objA, objB) {
         return true;
       }
     }
+  }
+  else if (objA instanceof Alien) {
+    if (objB instanceof Array)
+      return (isLaserCollision(isCollisionSizedObject, objA, objB));
   }
   return false;
 }
@@ -731,8 +757,9 @@ function Alien() {
   this.vSize = this.vertices.length;
   this.isActive = false;
   this.shield = 3;
-  this.speed = 3;
-  this.size = 5;
+  this.speed = 1;
+  // Size 17 seems to be an appropriate hitbox.
+  this.size = 17;
   this.scaleMatrix = scalem(12.0, 12.0, 12.0);
 
   this.location = vec3();
@@ -751,6 +778,7 @@ function Alien() {
   // called from outside.
   this.callMeMaybe = function() {
     this.isActive = true;
+    this.shield = 3;
     SFX.play("alien");
 
     this.location = createRandomCoords();
@@ -1259,6 +1287,17 @@ function drawAlien(alien) {
   for (var i = 0; i < 3; i++) {
     if (Math.abs(alien.location[i]) > playBoxVertexRadius)
       alien.location[i] = -1 * (alien.location[i] - alien.location[i] % playBoxVertexRadius);
+  }
+
+  var laserHit = isCollision(alien, thePlayer.Lasers);
+  if (laserHit !== false) {
+    SFX.play("shieldhit");
+    theAlien.shield--;
+    if (theAlien.shield == 0) {
+      SFX.play("explosion_big");
+      theAlien.isActive = false;
+      return;
+    }
   }
 
   ctmAlien = mult(ctm, translate(alien.location));
