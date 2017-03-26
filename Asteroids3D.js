@@ -498,13 +498,19 @@ function SFXManager() {
   };
 }
 
-function playAsteroidHitSoundEffect(asteroidSize) {
-  if (asteroidSize > Asteroid.MEDIUM)
+function givePointsAndPlayExplosion(asteroidSize) {
+  if (asteroidSize > Asteroid.MEDIUM) {
     SFX.play("explosion_big");
-  else if (asteroidSize > Asteroid.SMALL)
+    thePlayer.addPoints(1);
+  }
+  else if (asteroidSize > Asteroid.SMALL) {
     SFX.play("explosion_medium");
-  else
+    thePlayer.addPoints(2);
+  }
+  else {
     SFX.play("explosion_small");
+    thePlayer.addPoints(5);
+  }
 }
 
 function calculatePostCollisionVelocities(a, b) {
@@ -667,6 +673,11 @@ function Player() {
     // calculate velocity vector length.
     return Math.sqrt(Math.pow(this.velocity[0],2) + Math.pow(this.velocity[1], 2),
                       + Math.pow(this.velocity[2], 2)) * 100;
+  }
+
+  this.addPoints = function(points) {
+    this.points += points;
+    displayScore.innerText = this.points;
   }
 
   // Lasers --------------------------------------
@@ -1078,14 +1089,12 @@ function drawAsteroid(asteroid) {
   if (isCollision(asteroid, thePlayer)) {
     collisionWithPlayer(thePlayer, asteroid);
     calculatePostCollisionVelocities(thePlayer, asteroid);
-    // Killed by lasers, no need to continue drawing.
-    if (roids.indexOf(asteroid) == -1) return;
   }
 
   // Check collision with lasers
   var laserHit = isCollision(asteroid, thePlayer.Lasers);
   if (laserHit !== false) {
-    playAsteroidHitSoundEffect(asteroid.size);
+    givePointsAndPlayExplosion(asteroid.size);
     splitAsteroid(asteroid, thePlayer.Lasers[laserHit]);
     return;
   }
@@ -1294,6 +1303,7 @@ function drawAlien(alien) {
     SFX.play("shieldhit");
     theAlien.shield--;
     if (theAlien.shield == 0) {
+      thePlayer.addPoints(25);
       SFX.play("explosion_big");
       theAlien.isActive = false;
       return;
