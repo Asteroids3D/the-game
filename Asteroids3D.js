@@ -405,6 +405,9 @@ function SFXManager() {
       "interruptable": true}
   };
 
+  this.SFX.explosion_medium.audio.volume = 0.5;
+  this.SFX.explosion_small.audio.volume = 0.2;
+
   this.play = function(sound) {
     if (!this.soundsEnabled)
       return;
