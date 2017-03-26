@@ -85,7 +85,7 @@ window.onload = function init() {
 
   roids = []
   newRoids = []
-  generateNewAsteroids(3, 6, 24);
+  generateNewAsteroids(3, 4, 12);
   roids = newRoids;
 
   theSkybox = new Skybox();
