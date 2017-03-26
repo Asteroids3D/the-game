@@ -678,6 +678,7 @@ function Alien() {
   // called from outside.
   this.callMeMaybe = function() {
     this.isActive = true;
+    SFX.play("alien");
 
     this.location = createRandomCoords();
     // Birtist hjá öðrum hvorum x = 300 veggnum.
