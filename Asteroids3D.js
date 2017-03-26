@@ -480,6 +480,15 @@ function SFXManager() {
   };
 }
 
+function playAsteroidHitSoundEffect(asteroidSize) {
+  if (asteroidSize > Asteroid.MEDIUM)
+    SFX.play("explosion_big");
+  else if (asteroidSize > Asteroid.SMALL)
+    SFX.play("explosion_medium");
+  else
+    SFX.play("explosion_small");
+}
+
 function calculatePostCollisionVelocities(a, b) {
   var a_momentum = scale(a.mass, a.velocity);
   var b_momentum = scale(b.mass, b.velocity);
@@ -494,18 +503,21 @@ function calculatePostCollisionVelocities(a, b) {
   b.velocity = b_velocity_final;
 }
 
-function isCollision(asteroid, player) {
-  if (!theGame.isOn) return;
-  function checkCollisionWithObject(objLocation) {
-    if ((objLocation[0] >= roidX - size && objLocation[0] <= roidX + size)
-     && (objLocation[1] >= roidY - size && objLocation[1] <= roidY + size)
-     && (objLocation[2] >= roidZ - size && objLocation[2] <= roidZ + size)) {
-      // Object collision!
-      return true;
-    }
-  }
+function isCollisionAsteroid(asteroid, objLocation) {
+  var roidX = asteroid.location[0];
+  var roidY = asteroid.location[1];
+  var roidZ = asteroid.location[2];
+  var size = asteroid.size;
 
-  function createSmallerAsteroids(asteroid, lasers) {
+  if ((objLocation[0] >= roidX - size && objLocation[0] <= roidX + size)
+   && (objLocation[1] >= roidY - size && objLocation[1] <= roidY + size)
+   && (objLocation[2] >= roidZ - size && objLocation[2] <= roidZ + size)) {
+    // Object collision!
+    return true;
+  }
+}
+
+function splitAsteroid(asteroid, lasers) {
   // Create new asteroids
   roids.push(new Asteroid(asteroid.size / 2,
                             asteroid.location,
@@ -513,76 +525,63 @@ function isCollision(asteroid, player) {
   roids.push(new Asteroid(asteroid.size / 2,
                             asteroid.location,
                             negate(lasers.sideNormal)));
-  }
+  // Remote old asteroid
+  gl.deleteBuffer(asteroid.normalsBuffer);
+  gl.deleteBuffer(asteroid.vertexBuffer);
+  var index  = roids.indexOf(asteroid);
+  roids.splice(index, 1);
+  asteroid = null;
+}
 
-  var roidX = asteroid.location[0];
-  var roidY = asteroid.location[1];
-  var roidZ = asteroid.location[2];
-  var size = asteroid.size;
-
-  if (!player.isImmune && checkCollisionWithObject(player.location)) {
+function collisionWithPlayer(player, obj) {
+  if (!player.isImmune) {
     var shieldPoint = document.getElementById("shield-" + player.shield);
     shieldPoint.style.visibility = "hidden";
 
     player.shield -= 1;
-    // red flashing screen.
+    // TODO red flashing screen?
 
-    calculatePostCollisionVelocities(asteroid, player);
     SFX.play("collision");
     if (player.shield < 1) {
       console.log("Player should die");
       player.velocity = vec3();
       theGame.isOn = false;
-
-      // Show dead message on screen for x sec?
-
-
-    } else {
-      // gefum 2 sek í recovery eftir roid bump.
-      player.isImmune = true;
-      setTimeout(function() { player.isImmune = false; }, 2000);
-
+      // TODO Show dead message on screen for x sec?
     }
   }
+  // Give the player immunity for 2 seconds after collision
+  player.isImmune = true;
+  setTimeout(function() { player.isImmune = false; }, 2000);
+}
 
-  for (var i = 0; i < player.Lasers.length; i++) {
-    var lasers = player.Lasers[i];
-    if (lasers.isActive) {
-      if (checkCollisionWithObject(lasers.laser1Location)
-          || checkCollisionWithObject(lasers.laser2Location)) {
-        lasers.isActive = false;
-
-        // Deal with asteroids being hit
-        if (asteroid.size > Asteroid.MEDIUM) {
-          SFX.play("explosion_big");
-          createSmallerAsteroids(asteroid, lasers);
-        } else if (asteroid.size > Asteroid.SMALL) {
-          SFX.play("explosion_medium");
-          createSmallerAsteroids(asteroid, lasers);
+function isCollision(objA, objB) {
+  if (!theGame.isOn)
+    return false;
+  if (objA instanceof Asteroid) {
+    if (objB instanceof Array) {
+      for (var i=0; i < objB.length; i++) {
+        if (objB[i] instanceof LaserBeams) {
+          if (!objB[i].isActive)
+            return false;
+          if (isCollisionAsteroid(objA, objB[i].laser1Location) ||
+              isCollisionAsteroid(objA, objB[i].laser2Location)) {
+            objB[i].isActive = false;
+            return i;
+          }
         }
-        else
-          SFX.play("explosion_small");
-
-
-        // give player points & show on screen.
-        if (asteroid.size == Asteroid.LARGE) player.points += 1;
-        else if (asteroid.size == Asteroid.MEDIUM) player.points += 2;
-        else if (asteroid.size == Asteroid.SMALL) player.points += 5;
-        else player.points += 25; // shootin' the aliens
-
-        displayScore.innerText = player.points;
-
-        // Cleanup dead asteroid
-        gl.deleteBuffer(asteroid.normalsBuffer);
-        gl.deleteBuffer(asteroid.vertexBuffer);
-        var index  = roids.indexOf(asteroid);
-        roids.splice(index, 1);
-        asteroid = null;
-
+      }
+    }
+    else if (isCollisionAsteroid(objA, objB.location)) {
+      if (objB instanceof Player) {
+        return true;
+      }
+      else if (objB instanceof Alien) {
+        console.log("alien/asteroid collision");
         return true;
       }
     }
   }
+  return false;
 }
 
 // Models for .ply files -----------------------------
@@ -1049,8 +1048,18 @@ function drawAsteroid(asteroid) {
 
   // Check if this asteroid is colliding with the player or his lasers
   if (isCollision(asteroid, thePlayer)) {
+    collisionWithPlayer(thePlayer, asteroid);
+    calculatePostCollisionVelocities(thePlayer, asteroid);
     // Killed by lasers, no need to continue drawing.
     if (roids.indexOf(asteroid) == -1) return;
+  }
+
+  // Check collision with lasers
+  var laserHit = isCollision(asteroid, thePlayer.Lasers);
+  if (laserHit !== false) {
+    playAsteroidHitSoundEffect(asteroid.size);
+    splitAsteroid(asteroid, thePlayer.Lasers[laserHit]);
+    return;
   }
 
   asteroid.theta += asteroid.rotateSpeed % 360;
