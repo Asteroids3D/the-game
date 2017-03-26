@@ -610,7 +610,7 @@ function SFXManager() {
       "audio": new Audio("sfx/explosion_small.mp3"),
       "interruptable": true},
     "collision": {
-      "audio": new Audio("sfx/collision2.mp3"),
+      "audio": new Audio("sfx/collision.mp3"),
       "interruptable": true}
   };
 
