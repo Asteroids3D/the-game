@@ -66,9 +66,9 @@ p { margin: 0; }
   display: none;
 }
 
-.main-menu {
+.menu-container {
   position: absolute;
-  display: flex;
+  display: none;
   justify-content: center;
   align-items: center;
   background-color: rgba(0,255,255, 0.3);
@@ -78,6 +78,11 @@ p { margin: 0; }
   border: 2px outset white;
   border-radius: 5px;
 }
+
+#main-container {
+  display: flex;
+}
+
 
 .btn {
   margin: 5px;
@@ -97,6 +102,6 @@ hr {
   width: 100%;
 }
 
-#btn-resume {
+.btn-resume {
   display: none;
 }

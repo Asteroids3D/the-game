@@ -128,13 +128,23 @@ window.onload = function init() {
   displaySpeed = document.getElementById("display-speed");
   displayScore = document.getElementById("display-score");
 
+  btnInstructions =document.getElementById("btn-instructions");
+  btnHighScores = document.getElementById("btn-scores");
+  btnAbout = document.getElementById("btn-about");
   btnNewGame = document.getElementById("btn-play");
-  btnResumeGame = document.getElementById("btn-resume");
+
+  btnsResumeGame = document.querySelectorAll(".btn-resume");
+  btnsBack = document.querySelectorAll(".btn-back");
+
 
   dashboard = document.querySelector(".dashboard");
   crosshairs = document.querySelector(".crosshairs");
-  menu = document.querySelector(".main-menu");
 
+  menuContainers = document.querySelectorAll(".menu-container");
+  menuMain = document.getElementById("main-container");
+  menuHighScore = document.getElementById("highscore-container");
+  menuInstructions = document.getElementById("instructions-container");
+  menuAbout = document.getElementById("about-container");
 
   // GLSL variables -----------------------------------
 
@@ -203,16 +213,43 @@ window.onload = function init() {
 
   }
 
-  btnNewGame.onclick = function() {
-    dashboard.style.display = "flex";
-    menu.style.display = "none";
-    crosshairs.style.display = "flex";
 
-
-    theGame.isOn = true;
+  btnInstructions.onclick = function() {
+    menuMain.style.display = "none";
+    menuInstructions.style.display = "flex";
   }
 
-  btnResumeGame.onclick = function(e) { theGame.pauseHandler(e); }
+  btnHighScores.onclick = function() {
+    menuMain.style.display = "none";
+    menuHighScore.style.display = "flex";
+  }
+
+  btnAbout.onclick = function() {
+    menuMain.style.display = "none";
+    menuAbout.style.display = "flex";
+  }
+
+  btnNewGame.onclick = function() {
+    dashboard.style.display = "flex";
+    menuMain.style.display = "none";
+    crosshairs.style.display = "flex";
+
+    theGame.start();
+  }
+
+  for (var i = 0; i < btnsBack.length; i++) {
+    btnsBack[i].onclick = function() {
+      for (var j = 0; j < menuContainers.length; j++) {
+        menuContainers[j].style.display = "none";
+      }
+      menuMain.style.display = "flex";
+    }
+  }
+
+  for (var i = 0; i < btnsResumeGame.length; i++) {
+    btnsResumeGame[i].onclick = theGame.pauseHandler;
+  }
+
 
   window.addEventListener("keyup", function(e) {
     key.onKeyUp(e);
@@ -226,7 +263,10 @@ window.onload = function init() {
 
   window.addEventListener("keydown", function(e) {
     key.onKeyDown(e);
-    if (e.keyCode == key.PAUSE || e.keyCode == key.PAUSE2) theGame.pauseHandler(e);
+    if (e.keyCode == key.PAUSE || e.keyCode == key.PAUSE2) {
+      theGame.pauseLock = true;
+      theGame.pauseHandler();
+    }
   });
 
   render();
@@ -286,30 +326,39 @@ function Game() {
   this.pauseLock = false;
 
   this.start = function(/* game settings? */) {
-    this.beginTime = new Date();
+    //this.beginTime = new Date();
 
 
+    if (this.paused) {
+      // ekki fyrsti leikur, fyrir leikur paused.
+
+      this.paused = false;
+      render();
+    }
     this.isOn = true;
   }
 
-  this.pauseHandler = function(e) {
-    if (!this.pauseLock) {
-      if (e != btnResumeGame) this.pauseLock = true;
-      this.paused = !this.paused;
+  this.pauseHandler = function() {
+    this.paused = !this.paused;
 
-      if (!this.paused) {
-        dashboard.style.display = "flex";
-        crosshairs.style.display = "flex";
-        menu.style.display = "none";
-        render();
-      } else {
-        dashboard.style.display = "none";
-        crosshairs.style.display = "none";
-        menu.style.display = "flex";
-        btnResumeGame.style.display = "block";
+    if (!this.paused) {
+      dashboard.style.display = "flex";
+      crosshairs.style.display = "flex";
+
+      for (var i = 0; i < menuContainers.length; i++) {
+        menuContainers[i].style.display = "none";
+      }
+
+      render();
+    } else {
+      dashboard.style.display = "none";
+      crosshairs.style.display = "none";
+      menuMain.style.display = "flex";
+      for (var i = 0; i < btnsResumeGame.length; i++) {
+        btnsResumeGame[i].style.display = "block";
       }
     }
-  }
+  }.bind(this)
 }
 
 function setPerspective() {
