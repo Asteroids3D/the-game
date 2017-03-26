@@ -338,12 +338,11 @@ function getSphericalDirection(pitch, yaw) {
 
 function createRandomCoords() {
   var tooCloseToStart = true;
-  // Svæðið er 200*200*200
   var randX, randY, randZ;
   while(tooCloseToStart) {
-    randX = -100 + Math.random() * 550;
-    randY = -100 + Math.random() * 550;
-    randZ = -100 + Math.random() * 550;
+    randX = -playBoxVertexRadius + Math.random() * playBoxVertexRadius;
+    randY = -playBoxVertexRadius + Math.random() * playBoxVertexRadius;
+    randZ = -playBoxVertexRadius + Math.random() * playBoxVertexRadius;
 
     // Viljum ekki leyfa asteroid að fá upphafsstað sem er of nálægt player.
     if (!(randX < 20.0 && randX > -20.0 && randY < 20.0 && randY > -20.0 &&
@@ -769,7 +768,6 @@ function Alien() {
   this.vertices = alienModel.vertices;
   this.normals = alienModel.normals;
 
-
   this.vSize = this.vertices.length;
   this.isActive = false;
   this.shield = 3;
@@ -779,8 +777,6 @@ function Alien() {
   this.scaleMatrix = scalem(12.0, 12.0, 12.0);
 
   this.location = vec3();
-
-
   this.direction = vec3();
   this.velocity = vec3();
 
@@ -1104,6 +1100,12 @@ function drawAsteroid(asteroid) {
     return;
   }
 
+  // Check collision with alien
+  if (isCollision(asteroid, theAlien)) {
+    calculatePostCollisionVelocities(theAlien, asteroid);
+    SFX.play("shieldhit");
+  }
+
   asteroid.theta += asteroid.rotateSpeed % 360;
   asteroid.location = add(asteroid.location, asteroid.velocity);
 
@@ -1299,8 +1301,10 @@ function drawAlien(alien) {
   alien.location = add(alien.location, alien.velocity);
 
   for (var i = 0; i < 3; i++) {
-    if (Math.abs(alien.location[i]) > playBoxVertexRadius+50)
+    if (Math.abs(alien.location[i]) > playBoxVertexRadius) {
       alien.velocity = scale(-1, alien.velocity);
+      var tmp = alien.velocity[0];
+    }
   }
 
   var laserHit = isCollision(alien, thePlayer.Lasers);
