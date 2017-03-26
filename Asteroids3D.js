@@ -128,7 +128,8 @@ window.onload = function init() {
   displaySpeed = document.getElementById("display-speed");
   displayScore = document.getElementById("display-score");
 
-  menuPlay = document.getElementById("btn-play");
+  btnNewGame = document.getElementById("btn-play");
+  btnResumeGame = document.getElementById("btn-resume");
 
   dashboard = document.querySelector(".dashboard");
   crosshairs = document.querySelector(".crosshairs");
@@ -202,16 +203,16 @@ window.onload = function init() {
 
   }
 
-  menuPlay.onclick = function() {
+  btnNewGame.onclick = function() {
     dashboard.style.display = "flex";
     menu.style.display = "none";
     crosshairs.style.display = "flex";
 
 
-
-
     theGame.isOn = true;
   }
+
+  btnResumeGame.onclick = function(e) { theGame.pauseHandler(e); }
 
   window.addEventListener("keyup", function(e) {
     key.onKeyUp(e);
@@ -225,7 +226,7 @@ window.onload = function init() {
 
   window.addEventListener("keydown", function(e) {
     key.onKeyDown(e);
-    if (e.keyCode == key.PAUSE || e.keyCode == key.PAUSE2) theGame.pauseHandler();
+    if (e.keyCode == key.PAUSE || e.keyCode == key.PAUSE2) theGame.pauseHandler(e);
   });
 
   render();
@@ -291,15 +292,24 @@ function Game() {
     this.isOn = true;
   }
 
-  this.pauseHandler = function() {
+  this.pauseHandler = function(e) {
     if (!this.pauseLock) {
-      this.pauseLock = true;
+      if (e != btnResumeGame) this.pauseLock = true;
       this.paused = !this.paused;
 
-      if (!this.paused) render();
+      if (!this.paused) {
+        dashboard.style.display = "flex";
+        crosshairs.style.display = "flex";
+        menu.style.display = "none";
+        render();
+      } else {
+        dashboard.style.display = "none";
+        crosshairs.style.display = "none";
+        menu.style.display = "flex";
+        btnResumeGame.style.display = "block";
+      }
     }
   }
-
 }
 
 function setPerspective() {
