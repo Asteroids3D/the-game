@@ -67,6 +67,7 @@ window.onload = function init() {
   // Initializations ---------------------------------
 
   PR = PlyReader();
+  loadHighScore();
 
   theGame = new Game();
 
@@ -146,6 +147,8 @@ window.onload = function init() {
   menuInstructions = document.getElementById("instructions-container");
   menuAbout = document.getElementById("about-container");
 
+  btnApplyHighScore = document.getElementById("apply-highscore");
+
   // GLSL variables -----------------------------------
 
   locMvMatrix = gl.getUniformLocation(program, "mvMatrix");
@@ -213,7 +216,6 @@ window.onload = function init() {
 
   }
 
-
   btnInstructions.onclick = function() {
     menuMain.style.display = "none";
     menuInstructions.style.display = "flex";
@@ -248,6 +250,17 @@ window.onload = function init() {
 
   for (var i = 0; i < btnsResumeGame.length; i++) {
     btnsResumeGame[i].onclick = theGame.pauseHandler;
+  }
+
+  btnApplyHighScore.onclick = function() {
+    var name = document.getElementById("user-name");
+    var score = parseInt(displayScore.value);
+    saveHighScore(score, (name.value).slice(0, 8));
+
+    name.innerText = "";
+
+    document.getElementById("enter-highscore").style.display = "hidden";
+    menuMain.style.display = "flex";
   }
 
 
@@ -320,6 +333,104 @@ function manageKeyInput(player) {
       if (player.fired == false) thePlayer.fireLasers();
       player.fired = true;
     }
+}
+
+// localStorage virkar bara í Edge/IE ef síðan er á webserver
+// virkar fínt í flestum öðrum browsers hvar sem er.
+function saveHighScore(newScore, name) {
+  if (localStorage) {
+    var currentScores;
+    var jsonScores = localStorage.getItem("high_scores");
+    if (jsonScores) {
+      currentScores = JSON.parse(jsonScores);
+
+      if (newScore > fifth) {
+        fifth = newScore;
+        fifthName = name;
+      }
+      if (newScore > fourth) {
+        var tmpScore = fourth;
+        var tmpName = fourthName;
+
+        fourth = newScore; fourthName = name;
+        fifth = tmpScore; fifthName = tmpName;
+      }
+      if (newScore > third) {
+        var tmpScore = third;
+        var tmpName = thirdName;
+
+        third = newScore; thirdName = name;
+        fourth = tmpScore; fourthName = tmpName;
+      }
+      if (newScore > second) {
+        var tmpScore = second;
+        var tmpName = secondName;
+
+        second = newScore; secondName = name;
+        third = tmpScore; thirdName = tmpName;
+      }
+      if (newScore > first) {
+        var tmpScore = first;
+        var tmpName = first;
+
+        first = newScore; firstName = name;
+        second = tmpScore; secondName = tmpName;
+      }
+    } else {
+      // create new object with first score.
+      var currentScores = {
+        first: currentScore.toString(),
+        firstName: name,
+        second: "-",
+        secondName: "-",
+        third: "-",
+        thirdName: "-",
+        fourth: "-",
+        fourthName: "-",
+        fifth: "-",
+        fifthName: "-"
+      };
+    }
+    var jsonScores = JSON.stringify(currentScores);
+    localStorage.setItem("asteroids3d_highscores", jsonScores);
+
+    loadHighScore();
+  }
+}
+
+// localStorage virkar bara í Edge/IE ef síðan er á webserver
+// virkar fínt í flestum öðrum browsers hvar sem er.
+function loadHighScore() {
+  if (localStorage) {
+    var jsonHighScores = localStorage.getItem("asteroids3d_highscores");
+    if (jsonHighScores) {
+      var display1 = document.getElementById("score-1");
+      var display2 = document.getElementById("score-2");
+      var display3 = document.getElementById("score-3");
+      var display4 = document.getElementById("score-4");
+      var display5 = document.getElementById("score-5");
+
+      var displayName1 = document.getElementById("name-1");
+      var displayName2 = document.getElementById("name-2");
+      var displayName3 = document.getElementById("name-3");
+      var displayName4 = document.getElementById("name-4");
+      var displayName5 = document.getElementById("name-5");
+
+      var highScores = JSON.parse(jsonHighScores);
+
+      display1.innerText = highScores.first;
+      display2.innerText = highScores.second;
+      display3.innerText = highScores.third;
+      display4.innerText = highScores.fourth;
+      display5.innerText = highScores.fifth;
+
+      displayName5.innerText = highScores.fifthName;
+      displayName4.innerText = highScores.fourthName;
+      displayName3.innerText = highScores.thirdName;
+      displayName2.innerText = highScores.secondName;
+      displayName1.innerText = highScores.firstName;
+    }
+  }
 }
 
 function Game() {
@@ -616,15 +727,36 @@ function collisionWithPlayer(player, obj) {
 
     SFX.play("collision");
     if (player.shield < 1) {
-      console.log("Player should die");
       player.velocity = vec3();
       theGame.isOn = false;
+
       // TODO Show dead message on screen for x sec?
+      var newScore = parseInt(document.getElementById("display-score").value);
+
+      if (isHighScore(newScore)) {
+        // prompt user for name
+        var promptHighScore = document.getElementById("enter-highscore");
+        promptHighScore.style.display = "block";
+      } else menuMain.style.display = "flex";
+
+
     }
   }
   // Give the player immunity for 2 seconds after collision
   player.isImmune = true;
   setTimeout(function() { player.isImmune = false; }, 2000);
+}
+
+function isHighScore(score) {
+  if (localStorage) {
+    var jsonHighScores = localStorage.getItem("asteroids3d_highscores");
+    if (jsonHighScores) {
+      var highScores = JSON.parse(jsonHighScores);
+      if (score > highScores.fifth) return true;
+      else return false;
+    } else return true;
+  }
+  return false;
 }
 
 function isLaserCollision(obj, lasers) {

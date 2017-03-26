@@ -172,15 +172,32 @@
       </div>
       <div class="menu-container" id="highscore-container">
         <h1>High Scores</h1>
-        <p>1. <span id="score-1"></span></p>
-        <p>2. <span id="score-2"></span></p>
-        <p>3. <span id="score-3"></span></p>
-        <p>4. <span id="score-4"></span></p>
-        <p>5. <span id="score-5"></span></p>
+        <div class="high-dec">
+          <div class="high-names">
+            <p>1. <span id="name-1">-</span></p>
+            <p>2. <span id="name-2">-</span></p>
+            <p>3. <span id="name-3">-</span></p>
+            <p>4. <span id="name-4">-</span></p>
+            <p>5. <span id="name-5">-</span></p>
+          </div>
+          <div class="high-scores">
+            <p id="score-1">-</p>
+            <p id="score-2">-</p>
+            <p id="score-3">-</p>
+            <p id="score-4">-</p>
+            <p id="score-5">-</p>
+          </div>
+        </div>
         <div class="nav-controls">
           <button type="button" class="btn btn-back" id="btn-back-highscore">Back</button>
           <button type="button" class="btn btn-resume" id="btn-resume-highscore">Resume game</button>
         </div>
+      </div>
+      <div class="menu-container" id="enter-highscore">
+        <h1>New High Score!</h1>
+        <p>Please enter a name to go with that (max 8 letters)</p>
+        <input type="text" id="user-name">
+        <button type="button" class="btn" id="apply-highscore">Submit</button>
       </div>
       <canvas id="gl-canvas"></canvas>
       <div class="crosshairs">
