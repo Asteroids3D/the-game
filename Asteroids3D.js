@@ -828,6 +828,7 @@ function Game() {
   this.start = function(/* game settings? */) {
     //this.beginTime = new Date();
     thePlayer.shield = 5;
+    theAlien.isActive = false;
 
     if (this.paused) {
       // ekki fyrsti leikur, fyrir leikur paused.
