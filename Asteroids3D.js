@@ -490,8 +490,10 @@ function createRandomCoords() {
     randZ = -playBoxVertexRadius + Math.random() * playBoxVertexRadius*2;
 
     // Viljum ekki leyfa asteroid að fá upphafsstað sem er of nálægt player.
-    if (!(randX < 20.0 && randX > -20.0 && randY < 20.0 && randY > -20.0 &&
-        randZ < 20.0 && randZ > -20.0)) tooCloseToStart = false;
+    if (!(randX < Asteroid.LARGE+10 && randX > -Asteroid.LARGE-10 && 
+          randY < Asteroid.LARGE+10 && randY > -Asteroid.LARGE-10 &&
+          randZ < Asteroid.LARGE+10 && randZ > -Asteroid.LARGE-10))
+      tooCloseToStart = false;
   }
   return vec3(randX, randY, randZ);
 }
