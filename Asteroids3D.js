@@ -491,7 +491,7 @@ function createRandomCoords() {
     randZ = -playBoxVertexRadius + Math.random() * playBoxVertexRadius*2;
 
     // Viljum ekki leyfa asteroid að fá upphafsstað sem er of nálægt player.
-    if (!(randX < Asteroid.LARGE+10 && randX > -Asteroid.LARGE-10 && 
+    if (!(randX < Asteroid.LARGE+10 && randX > -Asteroid.LARGE-10 &&
           randY < Asteroid.LARGE+10 && randY > -Asteroid.LARGE-10 &&
           randZ < Asteroid.LARGE+10 && randZ > -Asteroid.LARGE-10))
       tooCloseToStart = false;
@@ -717,6 +717,10 @@ function collisionWithPlayer(player, obj) {
     if (player.shield == -1) {
       player.velocity = vec3();
       theGame.isOn = false;
+
+      for (var i = 0; i < btnsResumeGame.length; i++) {
+        btnsResumeGame[i].style.display = "none";
+      }
 
       // TODO Show dead message on screen for x sec?
       var newScore = parseInt(document.getElementById("display-score").innerText);
