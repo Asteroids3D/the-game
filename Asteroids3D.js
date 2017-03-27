@@ -840,12 +840,20 @@ function Game() {
     thePlayer.direction = vec3(1, 0, 0);
     thePlayer.yaw = 0;
     thePlayer.pitch = 0;
+    thePlayer.points = 0;
 
     theAlien.isActive = false;
 
+    displayScore.innerText = 0;
+    displaySpeed.innerText = 0.0;
+    var shieldPoints = document.querySelectorAll(".shield-points");
+
+    for (var i = 0; i < shieldPoints.length; i++) {
+      shieldPoints[i].style.visibility = "visible";
+    }
+
     if (this.paused) {
       // ekki fyrsti leikur, fyrir leikur paused.
-
       this.paused = false;
       render();
     }
