@@ -809,7 +809,7 @@ function LaserBeamModel() {
 
 function AlienModel() {
 
-  var plyData = PR.read("models/saucer2.ply");
+  var plyData = PR.read("models/saucer.ply");
 
   this.vertices = plyData.points;
   this.normals = plyData.normals;
