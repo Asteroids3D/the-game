@@ -109,8 +109,8 @@ window.onload = function init() {
   function callTheAliens() {
     var delay = (80 + Math.random() * 45) * 1000;
 
-    theAlien.callMeMaybe();
     setTimeout(callTheAliens, delay);
+    theAlien.callMeMaybe();
   }
 
   // First alien in 30sec
@@ -460,7 +460,8 @@ function addNewAsteroid() {
   var axisChooser = parseInt(Math.random() * 3);
   // Choose random side of random axis
   asteroid.location[axisChooser] = chooseSide();
-  roids.push(asteroid);
+  if (!theGame.paused && theGame.isOn)
+    roids.push(asteroid);
 }
 
 function generateNewAsteroids(nBig, nMedium, nSmall) {
@@ -1005,6 +1006,8 @@ function Alien() {
 
   // called from outside.
   this.callMeMaybe = function() {
+    if (theGame.paused || !theGame.isOn)
+      return;
     this.isActive = true;
     this.shield = 3;
     SFX.play("alien");
