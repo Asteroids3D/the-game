@@ -831,6 +831,8 @@ function Game() {
     thePlayer.velocity = vec3(0, 0, 0);
     thePlayer.location = vec3(0, 0, 0);
     thePlayer.direction = vec3(1, 0, 0);
+    thePlayer.yaw = 0;
+    thePlayer.pitch = 0;
 
     theAlien.isActive = false;
 
