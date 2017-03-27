@@ -107,7 +107,7 @@ h1 { text-align: center;}
   font-size: 18px;
   background-image: linear-gradient(45deg, rgba(100, 0, 200, 1), rgba(100, 0, 200, 0.5) 75%, rgba(100, 0, 200, 1));
   color: white;
-  width: 90%;
+  width: 95%;
   border-radius: 5px;
 }
 
@@ -132,3 +132,12 @@ hr {
 }
 
 #user-name { width: 100; margin: 20px 0; }
+
+.high-names {
+  width: 100px;
+}
+
+.high-dec p {
+  margin-bottom: 5px;
+  width: 100%;
+}

@@ -256,12 +256,12 @@ window.onload = function init() {
 
   btnApplyHighScore.onclick = function() {
     var name = document.getElementById("user-name");
-    var score = parseInt(displayScore.value);
+    var score = parseInt(displayScore.innerText);
     saveHighScore(score, (name.value).slice(0, 8));
 
-    name.innerText = "";
+    name.value = "";
 
-    document.getElementById("enter-highscore").style.display = "hidden";
+    document.getElementById("enter-highscore").style.display = "none";
     menuMain.style.display = "flex";
   }
 
@@ -340,48 +340,49 @@ function manageKeyInput(player) {
 // localStorage virkar bara í Edge/IE ef síðan er á webserver
 // virkar fínt í flestum öðrum browsers hvar sem er.
 function saveHighScore(newScore, name) {
+  debugger;
   if (localStorage) {
     var currentScores;
-    var jsonScores = localStorage.getItem("high_scores");
+    var jsonScores = localStorage.getItem("asteroids3d_highscores");
     if (jsonScores) {
       currentScores = JSON.parse(jsonScores);
 
-      if (newScore > fifth) {
-        fifth = newScore;
-        fifthName = name;
+      if (currentScores.fifth == "-" || newScore > currentScores.fifth) {
+        currentScores.fifth = newScore;
+        currentScores.fifthName = name;
       }
-      if (newScore > fourth) {
-        var tmpScore = fourth;
-        var tmpName = fourthName;
+      if (currentScores.fourth == "-" || newScore > currentScores.fourth) {
+        var tmpScore = currentScores.fourth;
+        var tmpName = currentScores.fourthName;
 
-        fourth = newScore; fourthName = name;
-        fifth = tmpScore; fifthName = tmpName;
+        currentScores.fourth = newScore; currentScores.fourthName = name;
+        currentScores.fifth = tmpScore; currentScores.fifthName = tmpName;
       }
-      if (newScore > third) {
-        var tmpScore = third;
-        var tmpName = thirdName;
+      if (currentScores.third == "-" || newScore > currentScores.third) {
+        var tmpScore = currentScores.third;
+        var tmpName = currentScores.thirdName;
 
-        third = newScore; thirdName = name;
-        fourth = tmpScore; fourthName = tmpName;
+        currentScores.third = newScore; currentScores.thirdName = name;
+        currentScores.fourth = tmpScore; currentScores.fourthName = tmpName;
       }
-      if (newScore > second) {
-        var tmpScore = second;
-        var tmpName = secondName;
+      if (currentScores.second == "-" || newScore > currentScores.second) {
+        var tmpScore = currentScores.second;
+        var tmpName = currentScores.secondName;
 
-        second = newScore; secondName = name;
-        third = tmpScore; thirdName = tmpName;
+        currentScores.second = newScore; currentScores.secondName = name;
+        currentScores.third = tmpScore; currentScores.thirdName = tmpName;
       }
-      if (newScore > first) {
-        var tmpScore = first;
-        var tmpName = first;
+      if (currentScores.first == "-" || newScore > currentScores.first) {
+        var tmpScore = currentScores.first;
+        var tmpName = currentScores.first;
 
-        first = newScore; firstName = name;
-        second = tmpScore; secondName = tmpName;
+        currentScores.first = newScore; currentScores.firstName = name;
+        currentScores.second = tmpScore; currentScores.secondName = tmpName;
       }
     } else {
       // create new object with first score.
       var currentScores = {
-        first: currentScore.toString(),
+        first: newScore.toString(),
         firstName: name,
         second: "-",
         secondName: "-",
@@ -701,20 +702,23 @@ function splitAsteroid(asteroid, lasers) {
 
 function collisionWithPlayer(player, obj) {
   if (!player.isImmune) {
-    var shieldPoint = document.getElementById("shield-" + player.shield);
-    shieldPoint.style.visibility = "hidden";
+    if (player.shield != 0) {
+      var shieldPoint = document.getElementById("shield-" + player.shield);
+      shieldPoint.style.visibility = "hidden";
+    }
 
-    player.shield -= 1;
+        player.shield -= 1;
     // TODO red flashing screen?
 
     SFX.play("collision");
-    if (player.shield < 1) {
+    if (player.shield == -1) {
       player.velocity = vec3();
       theGame.isOn = false;
 
       // TODO Show dead message on screen for x sec?
-      var newScore = parseInt(document.getElementById("display-score").value);
-
+      var newScore = parseInt(document.getElementById("display-score").innerText);
+      dashboard.style.display = "none";
+      crosshairs.style.display = "none";
       if (isHighScore(newScore)) {
         // prompt user for name
         var promptHighScore = document.getElementById("enter-highscore");
@@ -734,7 +738,7 @@ function isHighScore(score) {
     var jsonHighScores = localStorage.getItem("asteroids3d_highscores");
     if (jsonHighScores) {
       var highScores = JSON.parse(jsonHighScores);
-      if (score > highScores.fifth) return true;
+      if (highScores.fifth == "-" || score > highScores.fifth) return true;
       else return false;
     } else return true;
   }
@@ -823,7 +827,7 @@ function Game() {
 
   this.start = function(/* game settings? */) {
     //this.beginTime = new Date();
-
+    thePlayer.shield = 5;
 
     if (this.paused) {
       // ekki fyrsti leikur, fyrir leikur paused.
@@ -859,8 +863,6 @@ function Game() {
 }
 
 function Player() {
-
-  this.lives = 5;
 
   // Movement ---------------------------------
 
