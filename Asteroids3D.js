@@ -828,6 +828,10 @@ function Game() {
   this.start = function(/* game settings? */) {
     //this.beginTime = new Date();
     thePlayer.shield = 5;
+    thePlayer.velocity = vec3(0, 0, 0);
+    thePlayer.location = vec3(0, 0, 0);
+    thePlayer.direction = vec3(1, 0, 0);
+
     theAlien.isActive = false;
 
     if (this.paused) {
