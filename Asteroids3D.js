@@ -63,6 +63,7 @@ window.onload = function init() {
 
   gl.enable(gl.DEPTH_TEST);
   gl.depthFunc(gl.LEQUAL); // Fyrir skybox
+  gl.enable(gl.CULL_FACE);
 
   // Initializations ---------------------------------
 
@@ -505,14 +506,14 @@ function getCubeArrays(size) {
   var z = -(size[2] / 2);
 
   var vertices = [
-    vec3(x,         y,         z+size[2]),
-    vec3(x,         y+size[1], z+size[2]),
-    vec3(x+size[0], y+size[1], z+size[2]),
-    vec3(x+size[0], y,         z+size[2]),
     vec3(x,         y,         z),
     vec3(x,         y+size[1], z),
     vec3(x+size[0], y+size[1], z),
     vec3(x+size[0], y,         z),
+    vec3(x,         y,         z+size[2]),
+    vec3(x,         y+size[1], z+size[2]),
+    vec3(x+size[0], y+size[1], z+size[2]),
+    vec3(x+size[0], y,         z+size[2]),
   ];
   var vSize = vertices.length;
 
@@ -1291,8 +1292,8 @@ function SpaceCube() {
 
   // Lighting -------------------------------------
 
-  this.ambient = vec4(0.4, 0.4, 0.4, 1.0);
-  this.diffuse = vec4(0.8, 0.8, 0.8, 1.0);
+  this.ambient = vec4(0.2, 0.2, 0.2, 1.0);
+  this.diffuse = vec4(0.6, 0.6, 0.9, 1.0);
   this.specular = vec4(1.0, 1.0, 1.0, 1.0);
   this.shininess = 60.0;
 
@@ -1423,6 +1424,11 @@ function drawSpaceCube(cubeSide) {
   gl.vertexAttribPointer(locPosition, 3, gl.FLOAT, false, 0, 0);
 
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeSide.iBuffer);
+
+  gl.uniform4fv(locAmbient, mult(lightAmbient, cubeSide.ambient));
+  gl.uniform4fv(locDiffuse, mult(lightDiffuse, cubeSide.diffuse));
+  gl.uniform4fv(locSpecular, mult(lightSpecular, cubeSide.specular));
+  gl.uniform1f(locShininess, cubeSide.shininess);
 
   // 4x uppi
   var ctmSide1 = mult(ctm, translate(0.0, playBoxVertexRadius, playBoxVertexRadius));
