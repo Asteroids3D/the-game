@@ -1,8 +1,9 @@
-# Asteroids3D (Work in progress)
+# Asteroids3D
 
-It's a 3D space game based on the classic 2D arcade game Asteroids.
-Made with WebGL.
+It's a 3D space shooter game based on the classic 2D arcade game Asteroids.
+
+Made with pure WebGL/Javascript. No libraries such as Three.js used.
 
 This is a 2-person final assignment for a Computer graphics course at the University of Iceland.
 
-Run the game by opening the Asteroids3D.html file in a browser, but bear in mind, the game is still under development.
+The final game can be found here: http://arnarson.net/asteroid3d/ 
